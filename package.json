@@ -1,0 +1,23 @@
+{
+  "name": "pwa-grupo-01",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@7.11.0",
+  "scripts": {
+    "tailwind:watch": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css --watch",
+    "dev": "concurrently \"npm:tailwind:watch\" \"npm:preview\"",
+    "build": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css",
+    "preview": "serve",
+    "format": "prettier --write \"**/*.{html,js,css}\""
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "concurrently": "^8.0.1",
+    "postcss": "^8.4.23",
+    "prettier": "^2.8.8",
+    "prettier-plugin-tailwindcss": "^0.2.8",
+    "serve": "^14.2.0",
+    "tailwindcss": "^3.3.2"
+  }
+}
