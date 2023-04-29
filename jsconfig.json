@@ -1,0 +1,9 @@
+{
+  "include": ["./pwa-grupo-01/**/*"],
+  "compilerOptions": {
+    "strict": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "checkJs": true
+  }
+}

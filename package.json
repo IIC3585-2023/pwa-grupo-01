@@ -6,7 +6,7 @@
   "packageManager": "pnpm@7.11.0",
   "scripts": {
     "tailwind:watch": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css --watch",
-    "dev": "concurrently \"npm:tailwind:watch\" \"npm:preview\"",
+    "dev": "concurrently --raw --hide 1 \"npm:preview\" \"npm:tailwind:watch\"",
     "build": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css",
     "preview": "serve",
     "format": "prettier --write \"**/*.{html,js,css}\""
