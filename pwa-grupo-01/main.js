@@ -38,7 +38,7 @@ function Home(parent) {
 
     createEffect(() => {
       home.innerHTML = "";
-      for (const post of postsData()) {
+      for (const post of postsData().reverse()) {
         appendNode(home, "li", (postEl) => {
           postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
           appendNode(postEl, "img", (userImg) => {
@@ -131,10 +131,7 @@ window.addEventListener("DOMContentLoaded", () => {
   atachMainNavegation();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
-      await navigator.serviceWorker.register(serviceWorkerUrl, {
-        scope: basePath,
-        updateViaCache
-      });
+      await navigator.serviceWorker.register(serviceWorkerUrl, { scope: basePath });
     });
   }
 });

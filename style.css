@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+#content::-webkit-scrollbar {
+  display: none;
+}
+
 .active .hide-on-active,
 .show-on-active {
   display: none;
@@ -10,7 +14,6 @@
 .active .show-on-active {
   display: block;
 }
-
 
 .active #user-logged-in-btn {
   @apply outline outline-offset-2;
