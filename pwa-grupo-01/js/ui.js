@@ -68,3 +68,24 @@ export async function animateDomUpdate(fn) {
     fn();
   }
 }
+
+
+/** @typedef {keyof HTMLElementTagNameMap} HTMLElementKey */
+/**
+ * @param {HTMLElement} parent
+ * @param {HTMLElementKey} element
+ * @param {((el: HTMLElement) => void) | undefined} fn
+ **/
+export function appendNode(parent, element, fn = undefined) {
+  const el = document.createElement(element)
+  parent.appendChild(el)
+  if (fn) fn(el)
+  return el
+}
+
+/** @param {string} id */
+export function getElById(id) {
+  const el = document.getElementById(id)
+  if (!el) throw new Error(`Element with id ${id} not found`)
+  return el
+}

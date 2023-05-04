@@ -1,6 +1,15 @@
 "use strict";
 
-import { animateDomUpdate, createEffect, createSignal } from "./js/ui.js";
+import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
+import { app, user, signIn, logOut, postsData, writePostData, uploadResource } from "./firebase.js"
+
+/** @typedef {import("./firebase.js").User} User */
+
+/** @param {(user: User | null) => void} fn */
+const createEffectWithUser = (fn) => createEffect(() => fn(user()));
+/** @param {(user: User) => void} fn */
+const createEffectWithLoggedIn = (fn) => createEffectWithUser((u) => u && fn(u));
+
 
 function getPWADisplayMode() {
   if (document.referrer.startsWith("android-app://")) {
@@ -11,60 +20,126 @@ function getPWADisplayMode() {
   return "browser";
 }
 
+// function replaceURL(path) {
+//   const currentUrl = window.location.href;
+//   const newUrl = currentUrl.replace(/\/$/, '/') + `#${path}`;
+//   window.location.href = newUrl;
+// }
+
 const basePath = "/pwa-grupo-01/";
 const serviceWorkerUrl = "/pwa-grupo-01/sw.js";
 
-function Home() {
-  const el = document.createElement("div");
-  el.innerHTML = "Home";
-  return el;
+/** @typedef {(parent: HTMLElement) => void} PageComponent */
+
+/** @type {PageComponent} */
+function Home(parent) {
+  appendNode(parent, "ul", (home) => {
+    home.classList.add("flex", "flex-col", "items-center", "p-4");
+
+    for (const post of postsData()) {
+      appendNode(home, "li", (postEl) => {
+        postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
+        appendNode(postEl, "img", (userImg) => {
+          userImg.src = post.url;
+          userImg.classList.add("w-40", "h-40", "mr-2");
+        });
+        appendNode(postEl, "div", (userName) => {
+          userName.innerHTML = "Tony Ql"
+        });
+        appendNode(postEl, "div", (description) => {
+          description.innerHTML = post.descripion; // Ojo
+        });
+      })
+    }
+  });
 }
 
-function Likes() {
-  const el = document.createElement("div");
-  el.innerHTML = "Likes";
-  return el;
+/** @type {PageComponent} */
+function Likes(parent) {
+  appendNode(parent, "div", (likes) => {
+    likes.innerHTML = "Likes";
+  });
 }
 
-function Saved() {
-  const el = document.createElement("div");
-  el.innerHTML = "Saved";
-  return el;
+/** @type {PageComponent} */
+function Saved(parent) {
+  appendNode(parent, "div", (saved) => {
+    saved.innerHTML = "Saved";
+  });
 }
 
-function Settings() {
-  const el = document.createElement("div");
-  el.innerHTML = "Settings";
-  return el;
+/** @type {PageComponent} */
+function User(parent) {
+  appendNode(parent, "div", (userpage) => {
+    // Logged out
+    appendNode(userpage, "div", (loggedOut) => {
+
+      createEffectWithUser((user) => {
+        loggedOut.style.display = user ? "none" : "block";
+      });
+
+      appendNode(loggedOut, "button", (loginBtn) => {
+        loginBtn.textContent = "Login";
+        loginBtn.classList.add("p-2", "bg-blue-500", "rounded-md", "text-white");
+        loginBtn.addEventListener("click", signIn);
+      });
+    });
+
+    // Logged in
+    appendNode(userpage, "div", (loggedIn) => {
+      createEffectWithUser((user) => {
+        loggedIn.style.display = user ? "block" : "none";
+      });
+
+      appendNode(loggedIn, "img", (userImg) => {
+        userImg.style.width = "200px";
+        userImg.style.height = "200px";
+        createEffectWithLoggedIn((user) => {
+          userImg.src = user.photoURL;
+        });
+      });
+
+      appendNode(loggedIn, "div", (userNameDiv) => {
+        createEffectWithLoggedIn((user) => {
+          userNameDiv.innerHTML = `<b>Username:</b> <a target="_blank" rel="noopener noreferrer" href="https://github.com/${user.reloadUserInfo.screenName}">@${user.reloadUserInfo.screenName}</a>`;
+
+        });
+      });
+
+      appendNode(loggedIn, "button", (logoutBtn) => {
+        logoutBtn.addEventListener("click", logOut);
+        logoutBtn.textContent = "Logout";
+      });
+    });
+  });
 }
 
 const pages = [
   { btnId: "home-btn", component: Home },
   { btnId: "likes-btn", component: Likes },
   { btnId: "saved-btn", component: Saved },
-  { btnId: "settings-btn", component: Settings },
+  { btnId: "user-btn", component: User },
 ];
 
+
 window.addEventListener("DOMContentLoaded", () => {
-  const contentEl = document.getElementById("content");
-  if (!contentEl) throw new Error("Content element not found.");
-  const logoBtn = document.getElementById("logo-btn");
-  if (!logoBtn) throw new Error("Logo button element not found.");
-  const createDialog = /** @type {HTMLDialogElement | null} */ (document.getElementById("upload-post-dialog"));
-  if (!createDialog) throw new Error("Create dialog element not found.");
-  const createBtn = document.getElementById("create-btn");
-  if (!createBtn) throw new Error("Create button element not found.");
-  const cancelUploadBtn = document.getElementById("cancel-upload-btn");
-  if (!cancelUploadBtn) throw new Error("Cancel upload button element not found.");
+  atachCreatePost();
+  atachUserImageInNav();
+  atachMainNavegation();
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      await navigator.serviceWorker.register(serviceWorkerUrl, {
+        scope: basePath,
+      });
+    });
+  }
+});
 
-  const pagesWithBtns = pages.map((page) => {
-    const btn = document.getElementById(page.btnId);
-    if (!btn) throw new Error(`Button element not found: ${page.btnId}.`);
-    return { ...page, btn };
-  });
+function atachMainNavegation() {
+  const contentEl = getElById("content");
+  const logoBtn = getElById("logo-btn");
 
-  createBtn.addEventListener("click", () => createDialog.showModal());
-  cancelUploadBtn.addEventListener("click", () => createDialog.close());
+  const pagesWithBtns = pages.map((page) => ({ ...page, btn: getElById(page.btnId) }));
 
   const [page, setPage] = createSignal(pagesWithBtns[0]);
 
@@ -78,9 +153,10 @@ window.addEventListener("DOMContentLoaded", () => {
   let oldPage = page();
   createEffect(() => {
     if (oldPage === page()) {
+      // En pruner render
       oldPage = page();
       contentEl.innerHTML = "";
-      contentEl.appendChild(oldPage.component());
+      oldPage.component(contentEl);
       return;
     }
 
@@ -94,16 +170,97 @@ window.addEventListener("DOMContentLoaded", () => {
 
     animateDomUpdate(() => {
       contentEl.innerHTML = "";
-      contentEl.appendChild(pageElement.component());
+      pageElement.component(contentEl);
     });
     oldPage = pageElement;
   });
+}
 
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
-      await navigator.serviceWorker.register(serviceWorkerUrl, {
-        scope: basePath,
-      });
-    });
+function atachUserImageInNav() {
+  const img = /** @type {HTMLImageElement} */ (getElById("bar-user-img"));
+  createEffectWithUser((user) => {
+    document.documentElement.dataset["loggedin"] = String(!!user);
+    img.src = user?.photoURL ?? "";
+  });
+}
+
+function atachCreatePost() {
+  const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
+  const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
+  const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
+  const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
+  const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
+  const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
+  const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
+  const createBtn = getElById("create-btn");
+  const cancelUploadBtn = getElById("cancel-upload-btn");
+  const sexo /* 🤯 */ = getElById("upload-submit");
+
+  function resetUpload() {
+    clearImgInput()
+    uploadCaption.value = "";
   }
-});
+
+  function clearImgInput() {
+    uploadImgInput.value = "";
+    uploadImgInput.dispatchEvent(new Event("change"));
+  }
+
+  createBtn.addEventListener("click", () => createDialog.showModal());
+
+  cancelUploadBtn.addEventListener("click", () => {
+    createDialog.close()
+    resetUpload();
+  });
+
+  sexo.addEventListener("click", () => {
+    try {
+      // console.log(readPosts());
+      writePostData("user_1", "descripcion")
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  createEffectWithUser((user) => {
+    // TODO
+    createBtn.style.display = "";
+    // createBtn.style.display = user ? "" : "none";
+  });
+
+
+  // Image preview
+  uploadImgInput.addEventListener("change", () => {
+    if (!uploadImgInput.files) return;
+    const [file] = uploadImgInput.files;
+
+    if (file) {
+      uploadImgDnD.style.display = "none";
+      uploadPreviewContainer.style.display = "";
+      uploadPreviewImg.src = URL.createObjectURL(file);
+    } else {
+      uploadImgDnD.style.display = "";
+      uploadPreviewImg.src = "";
+      uploadPreviewContainer.style.display = "none";
+    }
+  });
+  uploadImgRemove.addEventListener("click", () => clearImgInput());
+
+  // Drag and drop
+  uploadImgDnD.ondrop = (e) => {
+    if (!uploadImgInput.files || !e.dataTransfer) return;
+    e.preventDefault();
+    uploadImgInput.files = e.dataTransfer.files;
+    uploadImgInput.dispatchEvent(new Event("change"));
+  }
+
+  uploadImgDnD.ondragover = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.add("dragover");
+  }
+
+  uploadImgDnD.ondragleave = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.remove("dragover");
+  }
+}

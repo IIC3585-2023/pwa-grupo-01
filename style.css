@@ -11,6 +11,19 @@
   display: block;
 }
 
+
+.active #user-logged-in-btn {
+  @apply outline outline-offset-2;
+}
+
+html[data-loggedin="false"] #user-logged-in-btn,
+html[data-loggedin="true"] #user-logged-out-btn {
+  display: none;
+}
+
+
+/* Animación de navegación principal */
+
 #content.to-left {
   view-transition-name: content-to-left;
 }
@@ -23,6 +36,7 @@
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -38,6 +52,7 @@
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }

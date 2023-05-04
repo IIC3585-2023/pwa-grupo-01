@@ -1,89 +1,127 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-950">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script defer type="module" src="/pwa-grupo-01/main.js"></script>
-    <link rel="manifest" href="/pwa-grupo-01/manifest.json" />
-    <link rel="stylesheet" href="/pwa-grupo-01/style.css" />
-    <meta name="theme-color" content="#000000" />
-    <title>PWA</title>
-  </head>
-  <body class="flex h-full flex-col items-center justify-center">
-    <nav class="flex h-14 w-full border-b border-slate-800 bg-slate-950 px-2 text-slate-300">
-      <button id="logo-btn" class="flex items-center">
-        <h1 class="pl-2 text-2xl font-extrabold">PWgAg</h1>
-      </button>
-    </nav>
-    <dialog id="upload-post-dialog" class="flex-col backdrop:bg-slate-950 backdrop:bg-opacity-75 open:flex">
-      <h1 class="mb-8 text-2xl">Subir aquí</h1>
-      <button id="cancel-upload-btn" class="bg-red-200 px-4 py-2 text-red-800">Cancelar</button>
-    </dialog>
-    <div id="content" class="flex w-full flex-grow flex-col items-center justify-center text-slate-50">Cargando...</div>
-    <nav class="relative grid w-full grid-cols-4 items-stretch border-t border-slate-800 text-gray-100">
-      <button id="home-btn" class="flex justify-center py-4">
-        <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z"
-          />
-        </svg>
-        <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
-        </svg>
-      </button>
-      <button id="likes-btn" class="flex justify-center py-4">
-        <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="m12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-          />
-        </svg>
-        <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3C4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5C22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1l-.1-.1C7.14 14.24 4 11.39 4 8.5C4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5c0 2.89-3.14 5.74-7.9 10.05z"
-          />
-        </svg>
-        <span class="sr-only">Likes</span>
-      </button>
-      <button id="saved-btn" class="flex justify-center py-4">
-        <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path fill="currentColor" d="m19 18l2 1V3c0-1.1-.9-2-2-2H8.99C7.89 1 7 1.9 7 3h10c1.1 0 2 .9 2 2v13zM15 5H5c-1.1 0-2 .9-2 2v16l7-3l7 3V7c0-1.1-.9-2-2-2z" />
-        </svg>
-        <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M15 7v12.97l-4.21-1.81l-.79-.34l-.79.34L5 19.97V7h10m4-6H8.99C7.89 1 7 1.9 7 3h10c1.1 0 2 .9 2 2v13l2 1V3c0-1.1-.9-2-2-2zm-4 4H5c-1.1 0-2 .9-2 2v16l7-3l7 3V7c0-1.1-.9-2-2-2z"
-          />
-        </svg>
-        <span class="sr-only">Guardado</span>
-      </button>
-      <button id="settings-btn" class="flex justify-center py-4">
-        <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88a9.947 9.947 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20z"
-          />
-        </svg>
-        <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path
-            fill="currentColor"
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zM7.35 18.5C8.66 17.56 10.26 17 12 17s3.34.56 4.65 1.5c-1.31.94-2.91 1.5-4.65 1.5s-3.34-.56-4.65-1.5zm10.79-1.38a9.947 9.947 0 0 0-12.28 0A7.957 7.957 0 0 1 4 12c0-4.42 3.58-8 8-8s8 3.58 8 8c0 1.95-.7 3.73-1.86 5.12z"
-          />
-          <path
-            fill="currentColor"
-            d="M12 6c-1.93 0-3.5 1.57-3.5 3.5S10.07 13 12 13s3.5-1.57 3.5-3.5S13.93 6 12 6zm0 5c-.83 0-1.5-.67-1.5-1.5S11.17 8 12 8s1.5.67 1.5 1.5S12.83 11 12 11z"
-          />
-        </svg>
-        <span class="sr-only">Perfil</span>
-      </button>
-      <button id="create-btn" class="absolute -top-20 right-4 ml-3 flex h-16 w-16 items-center justify-center rounded-full bg-purple-700">
+<html lang="es" class="h-full bg-slate-950" data-loggedin="false">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/pwa-grupo-01/manifest.json" />
+  <link rel="stylesheet" href="/pwa-grupo-01/style.css" />
+  <meta name="theme-color" content="#000000" />
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js",
+        "firebase/messaging": "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging.js",
+        "firebase/database": "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js",
+        "firebase/storage": "https://www.gstatic.com/firebasejs/9.21.0/firebase-storage.js"
+      }
+    }
+  </script>
+  <script defer type="module" src="./main.js"></script>
+  <title>PWA</title>
+</head>
+
+<body class="flex h-full flex-col items-center justify-center">
+  <nav class="flex h-14 w-full border-b border-slate-800 bg-slate-950 px-2 text-slate-300">
+    <button id="logo-btn" class="flex items-center">
+      <h1 class="pl-2 text-2xl font-extrabold">PWgAg</h1>
+    </button>
+  </nav>
+
+  <dialog id="upload-post-dialog" class="flex-col backdrop:bg-slate-950 backdrop:bg-opacity-75 open:flex">
+
+    <h1 class="mb-8 text-2xl text-center">Crea un post</h1>
+
+    <div id="upload-img-input-container" class="relative h-40 w-40 bg-slate-300 mx-auto">
+      <label id="upload-img-dnd" for="upload-img-input"
+        class="text-slate-800 absolute inset-0 cursor-pointer flex flex-col justify-center items-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M18 12.998h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5v-5a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2z" />
+          <path fill="currentColor" d="M9 16h6v-6h4l-7-7l-7 7h4zm-4 2h14v2H5z" />
         </svg>
-        <span class="sr-only">Crear</span>
-      </button>
-    </nav>
-  </body>
+        Subir una imagen
+      </label>
+      <div id="upload-img-preview-container" class="absolute inset-0" style="display: none">
+        <img id="upload-img-preview" class="w-full h-full object-cover" />
+        <button id="upload-img-remove" type="button" class="absolute right-2 top-2 text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+            <path fill="currentColor"
+              d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12L17 15.59z" />
+          </svg>
+          <span class="sr-only">Eliminar imagen</span>
+        </button>
+      </div>
+      <input id="upload-img-input" type="file" accept="image/*" class="sr-only" />
+    </div>
+
+    <input id="upload-caption" type="text" placeholder="Escribe una descripción..."
+      class="w-full mb-8 px-4 py-2 border border-slate-800" />
+
+    <button id="cancel-upload-btn" class="bg-red-200 px-4 py-2 text-red-800">Cancelar</button>
+    <button id="upload-submit" class="bg-green-200 px-4 py-2 text-green-800">Subir</button>
+  </dialog>
+
+  <div id="content" class="flex w-full flex-grow flex-col text-slate-50">Cargando...</div>
+
+  <nav class="relative grid w-full grid-cols-4 items-stretch border-t border-slate-800 text-gray-100">
+    <button id="home-btn" class="flex justify-center py-4">
+      <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" />
+      </svg>
+      <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
+      </svg>
+    </button>
+    <button id="likes-btn" class="flex justify-center py-4">
+      <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="m12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+      <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3C4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5C22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1l-.1-.1C7.14 14.24 4 11.39 4 8.5C4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5c0 2.89-3.14 5.74-7.9 10.05z" />
+      </svg>
+      <span class="sr-only">Likes</span>
+    </button>
+    <button id="saved-btn" class="flex justify-center py-4">
+      <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="m19 18l2 1V3c0-1.1-.9-2-2-2H8.99C7.89 1 7 1.9 7 3h10c1.1 0 2 .9 2 2v13zM15 5H5c-1.1 0-2 .9-2 2v16l7-3l7 3V7c0-1.1-.9-2-2-2z" />
+      </svg>
+      <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="M15 7v12.97l-4.21-1.81l-.79-.34l-.79.34L5 19.97V7h10m4-6H8.99C7.89 1 7 1.9 7 3h10c1.1 0 2 .9 2 2v13l2 1V3c0-1.1-.9-2-2-2zm-4 4H5c-1.1 0-2 .9-2 2v16l7-3l7 3V7c0-1.1-.9-2-2-2z" />
+      </svg>
+      <span class="sr-only">Guardado</span>
+    </button>
+    <button id="user-btn" class="flex justify-center py-4">
+      <div id="user-logged-out-btn">
+        <svg class="show-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+          <path fill="currentColor"
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88a9.947 9.947 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20z" />
+        </svg>
+        <svg class="hide-on-active" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+          <path fill="currentColor"
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zM7.35 18.5C8.66 17.56 10.26 17 12 17s3.34.56 4.65 1.5c-1.31.94-2.91 1.5-4.65 1.5s-3.34-.56-4.65-1.5zm10.79-1.38a9.947 9.947 0 0 0-12.28 0A7.957 7.957 0 0 1 4 12c0-4.42 3.58-8 8-8s8 3.58 8 8c0 1.95-.7 3.73-1.86 5.12z" />
+          <path fill="currentColor"
+            d="M12 6c-1.93 0-3.5 1.57-3.5 3.5S10.07 13 12 13s3.5-1.57 3.5-3.5S13.93 6 12 6zm0 5c-.83 0-1.5-.67-1.5-1.5S11.17 8 12 8s1.5.67 1.5 1.5S12.83 11 12 11z" />
+        </svg>
+      </div>
+      <div id="user-logged-in-btn" class="rounded-full overflow-hidden">
+        <img id="bar-user-img" src="" alt="" style="width: 31px; height: 31px">
+      </div>
+      <span class="sr-only">Perfil</span>
+    </button>
+    <button id="create-btn" style="display: none"
+      class="absolute -top-20 right-4 ml-3 flex h-16 w-16 items-center justify-center rounded-full bg-purple-700">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="currentColor"
+          d="M18 12.998h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5v-5a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2z" />
+      </svg>
+      <span class="sr-only">Crear</span>
+    </button>
+  </nav>
+</body>
+
 </html>
