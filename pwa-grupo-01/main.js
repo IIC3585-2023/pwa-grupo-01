@@ -2,6 +2,7 @@
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
 import { app, user, signIn, logOut, postsData, writePostData, uploadResource } from "./firebase.js";
+import { getTimeAgo } from "./js/utils.js";
 
 /** @typedef {import("./firebase.js").User} User */
 
@@ -37,19 +38,29 @@ function Home(parent) {
 
     createEffect(() => {
       home.innerHTML = "";
-      for (const post of postsData().reverse()) {
+      const posts = postsData();
+      console.log(posts)
+      const date = Date.now();
+      for (const post of posts) {
         appendNode(home, "li", (postEl) => {
-          postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
+          postEl.classList.add("flex", "mb-2", "flex-col");
+          appendNode(postEl, "div", (description) => {
+            description.innerHTML = post.description;
+            description.classList.add("font-bold");
+          });
           appendNode(postEl, "img", (userImg) => {
             userImg.src = post.resourceURL;
             userImg.classList.add("w-40", "h-40", "mr-2");
           });
           appendNode(postEl, "div", (userName) => {
-            userName.innerHTML = `@${post.authorID}`;
+            userName.innerHTML = `by @${post.authorID} ${getTimeAgo(post.key, date)}`;
+            userName.classList.add("text-center");
           });
-          appendNode(postEl, "div", (description) => {
-            description.innerHTML = post.description;
-          });
+          if (posts[posts.length - 1] !== post) {
+            appendNode(postEl, "hr", (hrEl) => {
+              hrEl.classList.add("my-2");
+            });
+          }
         });
       }
     });

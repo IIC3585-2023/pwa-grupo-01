@@ -4,6 +4,7 @@ import { getAuth, GithubAuthProvider, signInWithPopup, onAuthStateChanged, signI
 import { getDatabase, ref as refDB, set, onValue } from "firebase/database";
 import { getStorage, ref as refST, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { createSignal, createEffect } from "./js/ui.js";
+import { getUniqueName } from "./js/utils.js";
 /** @typedef {import("firebase/auth").User} User */
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -68,20 +69,13 @@ const db = getDatabase();
 const starCountRef = refDB(db, "posts");
 onValue(starCountRef, (snapshot) => {
   const data = snapshot.val();
-  setPostsData(Object.values(data));
+  const sortedPosts = Object.entries(data)
+    .sort(([keyA], [keyB]) => keyB.localeCompare(keyA))
+    .map(([key, value]) => ({ key, ...value }));
+  setPostsData(sortedPosts);
 });
 
 export { postsData };
-
-// @benjavicente mira lo funcional de esta funcion
-const getUniqueName = (file) => {
-  console.log(file);
-  const parts = file.name.split(".");
-  const extension = parts.slice(-1)[0];
-  const filename = parts.slice(0, -1).join(".");
-  const id = Date.now();
-  return `${filename}-${id}.${extension}`;
-};
 
 export async function deletePostData(postID) {
   const db = getDatabase();
