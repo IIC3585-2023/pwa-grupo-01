@@ -24,7 +24,6 @@ html[data-loggedin="true"] #user-logged-out-btn {
   display: none;
 }
 
-
 /* Animación de navegación principal */
 
 #content.to-left {

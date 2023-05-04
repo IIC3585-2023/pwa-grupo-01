@@ -1,7 +1,7 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
-import { app, user, signIn, logOut, postsData, writePostData, uploadResource } from "./firebase.js"
+import { app, user, signIn, logOut, postsData, writePostData, uploadResource } from "./firebase.js";
 
 /** @typedef {import("./firebase.js").User} User */
 
@@ -9,7 +9,6 @@ import { app, user, signIn, logOut, postsData, writePostData, uploadResource } f
 const createEffectWithUser = (fn) => createEffect(() => fn(user()));
 /** @param {(user: User) => void} fn */
 const createEffectWithLoggedIn = (fn) => createEffectWithUser((u) => u && fn(u));
-
 
 function getPWADisplayMode() {
   if (document.referrer.startsWith("android-app://")) {
@@ -42,18 +41,18 @@ function Home(parent) {
         appendNode(home, "li", (postEl) => {
           postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
           appendNode(postEl, "img", (userImg) => {
-            userImg.src = post.url;
+            userImg.src = post.resourceURL;
             userImg.classList.add("w-40", "h-40", "mr-2");
           });
           appendNode(postEl, "div", (userName) => {
-            userName.innerHTML = "Tony Ql"
+            userName.innerHTML = "Tony Ql";
           });
           appendNode(postEl, "div", (description) => {
-            description.innerHTML = post.descripion; // Ojo
+            description.innerHTML = post.description; // Ojo
           });
-        })
+        });
       }
-    })
+    });
   });
 }
 
@@ -76,7 +75,6 @@ function User(parent) {
   appendNode(parent, "div", (userpage) => {
     // Logged out
     appendNode(userpage, "div", (loggedOut) => {
-
       createEffectWithUser((user) => {
         loggedOut.style.display = user ? "none" : "block";
       });
@@ -105,7 +103,6 @@ function User(parent) {
       appendNode(loggedIn, "div", (userNameDiv) => {
         createEffectWithLoggedIn((user) => {
           userNameDiv.innerHTML = `<b>Username:</b> <a target="_blank" rel="noopener noreferrer" href="https://github.com/${user.reloadUserInfo.screenName}">@${user.reloadUserInfo.screenName}</a>`;
-
         });
       });
 
@@ -123,7 +120,6 @@ const pages = [
   { btnId: "saved-btn", component: Saved },
   { btnId: "user-btn", component: User },
 ];
-
 
 window.addEventListener("DOMContentLoaded", () => {
   atachCreatePost();
@@ -193,12 +189,12 @@ function atachCreatePost() {
   const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
   const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
   const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
-  const createBtn = getElById("create-btn");
-  const cancelUploadBtn = getElById("cancel-upload-btn");
-  const sexo /* 🤯 */ = getElById("upload-submit");
+  const createBtn /** @type {HTMLInputElement} */ = getElById("create-btn");
+  const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
+  const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
 
   function resetUpload() {
-    clearImgInput()
+    clearImgInput();
     uploadCaption.value = "";
   }
 
@@ -210,14 +206,15 @@ function atachCreatePost() {
   createBtn.addEventListener("click", () => createDialog.showModal());
 
   cancelUploadBtn.addEventListener("click", () => {
-    createDialog.close()
+    createDialog.close();
     resetUpload();
   });
 
-  sexo.addEventListener("click", () => {
+  savePostBtn.addEventListener("click", () => {
     try {
-      // console.log(readPosts());
-      writePostData("user_1", "descripcion")
+      writePostData("user_1", uploadCaption.value);
+      createDialog.close();
+      resetUpload();
     } catch (error) {
       console.error(error);
     }
@@ -228,7 +225,6 @@ function atachCreatePost() {
     createBtn.style.display = "";
     // createBtn.style.display = user ? "" : "none";
   });
-
 
   // Image preview
   uploadImgInput.addEventListener("change", () => {
@@ -253,15 +249,15 @@ function atachCreatePost() {
     e.preventDefault();
     uploadImgInput.files = e.dataTransfer.files;
     uploadImgInput.dispatchEvent(new Event("change"));
-  }
+  };
 
   uploadImgDnD.ondragover = (e) => {
     e.preventDefault();
     uploadImgDnD.classList.add("dragover");
-  }
+  };
 
   uploadImgDnD.ondragleave = (e) => {
     e.preventDefault();
     uploadImgDnD.classList.remove("dragover");
-  }
+  };
 }
