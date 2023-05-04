@@ -45,10 +45,10 @@ function Home(parent) {
             userImg.classList.add("w-40", "h-40", "mr-2");
           });
           appendNode(postEl, "div", (userName) => {
-            userName.innerHTML = "Tony Ql";
+            userName.innerHTML = post.authorID;
           });
           appendNode(postEl, "div", (description) => {
-            description.innerHTML = post.description; // Ojo
+            description.innerHTML = post.description;
           });
         });
       }
