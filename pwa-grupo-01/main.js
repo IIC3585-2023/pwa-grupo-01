@@ -45,7 +45,7 @@ function Home(parent) {
             userImg.classList.add("w-40", "h-40", "mr-2");
           });
           appendNode(postEl, "div", (userName) => {
-            userName.innerHTML = post.authorID;
+            userName.innerHTML = `@${post.authorID}`;
           });
           appendNode(postEl, "div", (description) => {
             description.innerHTML = post.description;
@@ -182,82 +182,84 @@ function atachUserImageInNav() {
 }
 
 function atachCreatePost() {
-  const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
-  const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
-  const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
-  const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
-  const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
-  const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
-  const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
-  const createBtn /** @type {HTMLInputElement} */ = getElById("create-btn");
-  const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
-  const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
+  createEffectWithUser((user) => {
+    const createBtn /** @type {HTMLInputElement} */ = getElById("create-btn");
+    if (!user) {
+      createBtn.classList.add("hidden");
+      createBtn.classList.remove("flex");
+      return;
+    }
+    createBtn.classList.remove("hidden");
+    createBtn.classList.add("flex");
+    const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
+    const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
+    const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
+    const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
+    const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
+    const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
+    const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
+    const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
+    const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
 
-  function resetUpload() {
-    clearImgInput();
-    uploadCaption.value = "";
-  }
+    function resetUpload() {
+      clearImgInput();
+      uploadCaption.value = "";
+    }
 
-  function clearImgInput() {
-    uploadImgInput.value = "";
-    uploadImgInput.dispatchEvent(new Event("change"));
-  }
+    function clearImgInput() {
+      uploadImgInput.value = "";
+      uploadImgInput.dispatchEvent(new Event("change"));
+    }
 
-  createBtn.addEventListener("click", () => createDialog.showModal());
+    createBtn.addEventListener("click", () => createDialog.showModal());
 
-  cancelUploadBtn.addEventListener("click", () => {
-    createDialog.close();
-    resetUpload();
-  });
-
-  savePostBtn.addEventListener("click", () => {
-    try {
-      writePostData("user_1", uploadCaption.value);
+    cancelUploadBtn.addEventListener("click", () => {
       createDialog.close();
       resetUpload();
-    } catch (error) {
-      console.error(error);
-    }
+    });
+
+    savePostBtn.addEventListener("click", () => {
+      try {
+        writePostData(user?.reloadUserInfo?.screenName, uploadCaption.value);
+        createDialog.close();
+        resetUpload();
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    // Image preview
+    uploadImgInput.addEventListener("change", () => {
+      if (!uploadImgInput.files) return;
+      const [file] = uploadImgInput.files;
+
+      if (file) {
+        uploadImgDnD.style.display = "none";
+        uploadPreviewContainer.style.display = "";
+        uploadPreviewImg.src = URL.createObjectURL(file);
+      } else {
+        uploadImgDnD.style.display = "";
+        uploadPreviewImg.src = "";
+        uploadPreviewContainer.style.display = "none";
+      }
+    });
+    uploadImgRemove.addEventListener("click", () => clearImgInput());
+
+    // Drag and drop
+    uploadImgDnD.ondrop = (e) => {
+      if (!uploadImgInput.files || !e.dataTransfer) return;
+      e.preventDefault();
+      uploadImgInput.files = e.dataTransfer.files;
+      uploadImgInput.dispatchEvent(new Event("change"));
+    };
+
+    uploadImgDnD.ondragover = (e) => {
+      e.preventDefault();
+      uploadImgDnD.classList.add("dragover");
+    };
+
+    uploadImgDnD.ondragleave = (e) => {
+      e.preventDefault();
+      uploadImgDnD.classList.remove("dragover");
+    };
   });
-
-  createEffectWithUser((user) => {
-    // TODO
-    createBtn.style.display = "";
-    // createBtn.style.display = user ? "" : "none";
-  });
-
-  // Image preview
-  uploadImgInput.addEventListener("change", () => {
-    if (!uploadImgInput.files) return;
-    const [file] = uploadImgInput.files;
-
-    if (file) {
-      uploadImgDnD.style.display = "none";
-      uploadPreviewContainer.style.display = "";
-      uploadPreviewImg.src = URL.createObjectURL(file);
-    } else {
-      uploadImgDnD.style.display = "";
-      uploadPreviewImg.src = "";
-      uploadPreviewContainer.style.display = "none";
-    }
-  });
-  uploadImgRemove.addEventListener("click", () => clearImgInput());
-
-  // Drag and drop
-  uploadImgDnD.ondrop = (e) => {
-    if (!uploadImgInput.files || !e.dataTransfer) return;
-    e.preventDefault();
-    uploadImgInput.files = e.dataTransfer.files;
-    uploadImgInput.dispatchEvent(new Event("change"));
-  };
-
-  uploadImgDnD.ondragover = (e) => {
-    e.preventDefault();
-    uploadImgDnD.classList.add("dragover");
-  };
-
-  uploadImgDnD.ondragleave = (e) => {
-    e.preventDefault();
-    uploadImgDnD.classList.remove("dragover");
-  };
 }
