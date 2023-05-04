@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+/// version = "0.0.2"
 
 self.addEventListener("install", (event) => {
   console.log("Service Worker installing.");
