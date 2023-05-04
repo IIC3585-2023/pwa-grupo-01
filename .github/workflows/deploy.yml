@@ -31,7 +31,7 @@ jobs:
           node-version: 18
           cache: "pnpm"
 
-      - run: pnpm install
+      - run: pnpm install --prefer-offline --prefer-frozen-lockfile --prod
 
       - run: pnpm run build
 
