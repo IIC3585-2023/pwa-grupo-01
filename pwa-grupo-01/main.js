@@ -36,21 +36,24 @@ function Home(parent) {
   appendNode(parent, "ul", (home) => {
     home.classList.add("flex", "flex-col", "items-center", "p-4");
 
-    for (const post of postsData()) {
-      appendNode(home, "li", (postEl) => {
-        postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
-        appendNode(postEl, "img", (userImg) => {
-          userImg.src = post.url;
-          userImg.classList.add("w-40", "h-40", "mr-2");
-        });
-        appendNode(postEl, "div", (userName) => {
-          userName.innerHTML = "Tony Ql"
-        });
-        appendNode(postEl, "div", (description) => {
-          description.innerHTML = post.descripion; // Ojo
-        });
-      })
-    }
+    createEffect(() => {
+      home.innerHTML = "";
+      for (const post of postsData()) {
+        appendNode(home, "li", (postEl) => {
+          postEl.classList.add("flex", "items-center", "mb-2", "flex-col");
+          appendNode(postEl, "img", (userImg) => {
+            userImg.src = post.url;
+            userImg.classList.add("w-40", "h-40", "mr-2");
+          });
+          appendNode(postEl, "div", (userName) => {
+            userName.innerHTML = "Tony Ql"
+          });
+          appendNode(postEl, "div", (description) => {
+            description.innerHTML = post.descripion; // Ojo
+          });
+        })
+      }
+    })
   });
 }
 
@@ -130,6 +133,7 @@ window.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("load", async () => {
       await navigator.serviceWorker.register(serviceWorkerUrl, {
         scope: basePath,
+        updateViaCache
       });
     });
   }
