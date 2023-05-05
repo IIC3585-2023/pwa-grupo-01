@@ -48,7 +48,7 @@ export async function writePostData(authorID, description) {
   });
 }
 
-function uploadResource() {
+export function uploadResource() {
   const storage = getStorage();
 
   const file = document.getElementById("upload-img-input")?.files[0];
