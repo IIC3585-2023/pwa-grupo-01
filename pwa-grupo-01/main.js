@@ -1,7 +1,7 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
-import { app, user, signIn, logOut, postsData, writePostData, deletePostData } from "./firebase.js";
+import { app, user, signIn, logOut, postsData, writePostData, uploadResource, deletePostData } from "./firebase.js";
 import { getTimeAgo } from "./js/utils.js";
 
 /** @typedef {import("./firebase.js").User} User */
