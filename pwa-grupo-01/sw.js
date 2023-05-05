@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-const version = "0.0.4";
+const version = "0.0.5";
 
 self.addEventListener("install", (event) => {
   console.log("Service Worker installing...", version);
