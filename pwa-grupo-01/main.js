@@ -1,7 +1,7 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
-import { app, user, signIn, logOut, postsData, writePostData, uploadResource } from "./firebase.js";
+import { app, user, signIn, logOut, postsData, writePostData, deletePostData } from "./firebase.js";
 import { getTimeAgo } from "./js/utils.js";
 
 /** @typedef {import("./firebase.js").User} User */
@@ -39,7 +39,7 @@ function Home(parent) {
     createEffect(() => {
       home.innerHTML = "";
       const posts = postsData();
-      console.log(posts)
+      console.log(posts);
       const date = Date.now();
       for (const post of posts) {
         appendNode(home, "li", (postEl) => {
@@ -55,6 +55,32 @@ function Home(parent) {
           appendNode(postEl, "div", (userName) => {
             userName.innerHTML = `by @${post.authorID} ${getTimeAgo(post.key, date)}`;
             userName.classList.add("text-center");
+          });
+          createEffectWithUser((user) => {
+            if (user.reloadUserInfo.screenName === post.authorID) {
+              appendNode(postEl, "button", (button) => {
+                button.innerHTML = `Delete Post`;
+                // TODO: Lo dejaria solo como una cruz y en la parte del perfil
+                // Hice esta wea acá solo pa probar la feature del back
+                button.classList.add(
+                  "text-white",
+                  "bg-red-700",
+                  "hover:bg-red-800",
+                  "font-medium",
+                  "rounded-lg",
+                  "text-sm",
+                  "py-1.5",
+                  "my-1",
+                  "dark:bg-red-600"
+                );
+                button.addEventListener("click", () => {
+                  const confirmed = confirm("Are you sure you want to delete this post?");
+                  if (confirmed) {
+                    deletePostData(post.key);
+                  }
+                });
+              });
+            }
           });
           if (posts[posts.length - 1] !== post) {
             appendNode(postEl, "hr", (hrEl) => {

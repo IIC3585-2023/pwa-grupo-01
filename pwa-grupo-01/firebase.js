@@ -48,7 +48,7 @@ export async function writePostData(authorID, description) {
   });
 }
 
-export function uploadResource() {
+function uploadResource() {
   const storage = getStorage();
 
   const file = document.getElementById("upload-img-input")?.files[0];
@@ -86,10 +86,15 @@ export async function deletePostData(postID) {
 export function getOnePost(postID) {
   const db = getDatabase();
   const starCountRef = refDB(db, "posts/" + postID);
-  return starCountRef;
+  let postData = [];
+  onValue(starCountRef, (snapshot) => {
+    const data = snapshot.val();
+    postData = data;
+  });
+  return postData;
 }
 
-export function deleteResource(postID) {
+function deleteResource(postID) {
   const post = getOnePost(postID);
   const url = post?.resourceURL;
   const storage = getStorage();
