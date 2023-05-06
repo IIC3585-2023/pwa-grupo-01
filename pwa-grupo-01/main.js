@@ -93,14 +93,18 @@ function Home(parent) {
             likeButton.classList.add("text-red-500");
             fill.classList.add("text-red-500");
             outline.classList.add("text-red-500");
-
+            img.addEventListener("dblclick", () => {
+              dislikePost(post.key, user.reloadUserInfo.screenName);
+            });
             likeButton.addEventListener("click", () => {
               dislikePost(post.key, user.reloadUserInfo.screenName);
             });
           } else {
             fill.classList.add("text-white");
             outline.classList.add("text-transparent");
-
+            img.addEventListener("dblclick", () => {
+              likePost(post.key, user.reloadUserInfo.screenName);
+            });
             likeButton.addEventListener("click", () => {
               likePost(post.key, user.reloadUserInfo.screenName);
             });
