@@ -12,3 +12,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   console.log("Service Worker fetching.");
 });
+
+self.addEventListener("push", (event) => {
+  // Handle incoming push notification
+  console.log("Push received: ", event);
+});

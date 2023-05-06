@@ -18,9 +18,7 @@ export function getTimeAgo(date) {
   const unitRanges = /** @type {[Intl.RelativeTimeFormatUnit, number][]} */ (Object.entries(timeDeltaRanges));
   for (const [unit, range] of unitRanges) {
     if (Math.abs(seconds) > range || unit === "seconds") {
-      console.log(date, seconds, range);
       const value = Math.round(seconds / range);
-      console.log(value, unit);
       return timeDeltaFormatter.format(value, unit);
     }
   }
@@ -36,3 +34,5 @@ export const getUniqueName = (file) => {
   const id = Date.now();
   return `${filename}-${id}.${extension}`;
 };
+
+export const getLinkGitHubUser = (username) => `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
