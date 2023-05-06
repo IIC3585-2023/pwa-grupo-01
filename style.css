@@ -19,6 +19,10 @@
   @apply outline outline-offset-2;
 }
 
+html[data-loggedin="false"] .hide-on-anon {
+  display: none;
+}
+
 html[data-loggedin="false"] #user-logged-in-btn,
 html[data-loggedin="true"] #user-logged-out-btn {
   display: none;

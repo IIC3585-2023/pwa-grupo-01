@@ -88,3 +88,14 @@ export function getElById(id) {
   if (!el) throw new Error(`Element with id ${id} not found`);
   return el;
 }
+
+/**
+ * @param {HTMLElement} el
+ * @param {string} selector
+ * @returns {Element}
+ **/
+export function querySelect(el, selector) {
+  const found = el.querySelector(selector);
+  if (!found) throw new Error(`Element with selector ${selector} not found`);
+  return found;
+}

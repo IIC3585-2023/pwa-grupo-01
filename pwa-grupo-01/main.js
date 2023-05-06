@@ -1,6 +1,6 @@
 "use strict";
 
-import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
+import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
 import {
   app,
   user,
@@ -41,102 +41,81 @@ const serviceWorkerUrl = "/pwa-grupo-01/sw.js";
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
+const postTemplate = /** @type {HTMLTemplateElement} */ (getElById("post-template"));
 /** @type {PageComponent} */
 function Home(parent) {
   appendNode(parent, "ul", (home) => {
-    home.classList.add("flex", "flex-col", "items-center", "p-4");
+    home.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24");
 
-    createEffect(() => {
+    createEffectWithUser((user) => {
       home.innerHTML = "";
       const posts = postsData();
-      console.log(posts);
-      const date = Date.now();
+
       for (const post of posts) {
         const likes = post?.likes ? Object.keys(post.likes) : [];
         const numLikes = likes.length;
-        appendNode(home, "li", (postEl) => {
-          postEl.classList.add("flex", "mb-2", "flex-col");
-          appendNode(postEl, "div", (description) => {
-            description.innerHTML = post.description;
-            description.classList.add("font-bold");
-          });
-          appendNode(postEl, "img", (img) => {
-            img.src = post.resourceURL;
-            img.classList.add("max-w-40", "max-h-40", "mr-2");
-          });
-          appendNode(postEl, "div", (userName) => {
-            userName.innerHTML = `by @${post.authorID} ${getTimeAgo(post.key, date)}`;
-            userName.classList.add("text-center");
-          });
-          appendNode(postEl, "div", (likesDiv) => {
-            likesDiv.innerHTML = `${numLikes} like${numLikes === 1 ? "" : "s"}`;
-            // likesDiv.classList.add("text-center");
-          });
-          // POR EL MINUTO SON BOTONES FEOS @benjavicente pongale el icono luego
-          createEffectWithUser((user) => {
-            if (likes.includes(user.reloadUserInfo.screenName)) {
-              appendNode(postEl, "button", (button) => {
-                button.innerHTML = `Dislike`;
-                button.classList.add(
-                  "text-white",
-                  "bg-green-700",
-                  "hover:bg-green-800",
-                  "font-medium",
-                  "rounded-lg",
-                  "text-sm",
-                  "py-1.5"
-                );
-                button.addEventListener("click", () => {
-                  dislikePost(post.key, user.reloadUserInfo.screenName);
-                });
-              });
-            } else {
-              appendNode(postEl, "button", (button) => {
-                button.innerHTML = `Like`;
-                button.classList.add(
-                  "text-white",
-                  "bg-green-700",
-                  "hover:bg-green-800",
-                  "font-medium",
-                  "rounded-lg",
-                  "text-sm",
-                  "py-1.5"
-                );
-                button.addEventListener("click", () => {
-                  likePost(post.key, user.reloadUserInfo.screenName);
-                });
-              });
-            }
-            if (user.reloadUserInfo.screenName === post.authorID) {
-              appendNode(postEl, "button", (button) => {
-                button.innerHTML = `Delete Post`;
-                // TODO: Lo dejaria solo como una cruz y en la parte del perfil
-                // Hice esta wea acá solo pa probar la feature del back
-                button.classList.add(
-                  "text-white",
-                  "bg-red-700",
-                  "hover:bg-red-800",
-                  "font-medium",
-                  "rounded-lg",
-                  "text-sm",
-                  "py-1.5",
-                  "my-1"
-                );
-                button.addEventListener("click", () => {
-                  const confirmed = confirm("Are you sure you want to delete this post?");
-                  if (confirmed) {
-                    deletePostData(post.key);
-                  }
-                });
-              });
-            }
-          });
-          if (posts[posts.length - 1] !== post) {
-            appendNode(postEl, "hr", (hrEl) => {
-              hrEl.classList.add("my-2");
+
+        const postElement = /** @type {HTMLLIElement} */ (postTemplate.content.cloneNode(true));
+
+        const ownerAvatar = querySelect(postElement, ".post-owner-avatar");
+
+        const ownerName = querySelect(postElement, ".post-owner-name");
+        ownerName.innerHTML = post.authorID;
+
+        const createdAt = /** @type {HTMLTimeElement} */ (querySelect(postElement, ".post-created-at"));
+        createdAt.innerHTML = getTimeAgo(post.key);
+        createdAt.dateTime = new Date(+post.key).toISOString();
+
+        const postFig = /** @type {HTMLElement} */ (querySelect(postElement, "figure"));
+        const captionId = `caption-${post.key}`;
+        postFig.setAttribute("aria-labelledby", captionId);
+
+        const img = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-img"));
+        img.src = post.resourceURL;
+
+        const caption = querySelect(postElement, ".post-caption");
+        caption.innerHTML = post.description;
+        caption.id = captionId;
+
+        const likeCount = querySelect(postElement, ".post-like-count");
+        const formattedLikes = new Intl.NumberFormat("es-CL", { compactDisplay: "short" }).format(numLikes);
+        likeCount.innerHTML = `${formattedLikes} like${numLikes === 1 ? "" : "s"}`;
+
+        const saveButton = querySelect(postElement, ".post-save");
+
+        const deleteButton = querySelect(postElement, ".post-delete");
+
+        const likeButton = querySelect(postElement, ".post-like");
+
+        if (user) {
+          const [outline, fill] = likeButton.querySelectorAll("path");
+          if (likes.includes(user.reloadUserInfo.screenName)) {
+            likeButton.classList.add("text-red-500");
+            fill.classList.add("text-red-500");
+            outline.classList.add("text-red-500");
+
+            likeButton.addEventListener("click", () => {
+              dislikePost(post.key, user.reloadUserInfo.screenName);
+            });
+          } else {
+            fill.classList.add("text-white");
+            outline.classList.add("text-transparent");
+
+            likeButton.addEventListener("click", () => {
+              likePost(post.key, user.reloadUserInfo.screenName);
             });
           }
-        });
+
+          if (user.reloadUserInfo.screenName === post.authorID) {
+            deleteButton.addEventListener("click", () => {
+              deletePostData(post.key);
+            });
+          } else {
+            deleteButton.remove();
+          }
+        }
+
+        home.appendChild(postElement);
       }
     });
   });
