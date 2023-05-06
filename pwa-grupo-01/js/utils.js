@@ -1,22 +1,30 @@
-export function getTimeAgo(timestamp, now = Date.now()) {
-  const difference = now - timestamp;
-  const seconds = Math.floor(difference / 1000);
+// https://stackoverflow.com/a/69122877
+const timeDeltaFormatter = new Intl.RelativeTimeFormat("es-cl", { numeric: "auto" });
 
-  let message;
-  if (seconds < 60) {
-    message = `${seconds} second${seconds === 1 ? "" : "s"} ago`;
-  } else if (seconds < 60 * 60) {
-    const minutes = Math.floor(seconds / 60);
-    message = `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-  } else if (seconds < 60 * 60 * 24) {
-    const hours = Math.floor(seconds / (60 * 60));
-    message = `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  } else {
-    const days = Math.floor(seconds / (60 * 60 * 24));
-    message = `${days} day${days === 1 ? "" : "s"} ago`;
+/** @type {Partial<Record<Intl.RelativeTimeFormatUnit, number>>} */
+const timeDeltaRanges = {
+  weeks: 3600 * 24 * 7,
+  days: 3600 * 24,
+  hours: 3600,
+  minutes: 60,
+  seconds: 1,
+};
+
+/** @param {Date | number} date */
+export function getTimeAgo(date) {
+  const d = new Date(+date);
+
+  const seconds = (d.getTime() - Date.now()) / 1000;
+  const unitRanges = /** @type {[Intl.RelativeTimeFormatUnit, number][]} */ (Object.entries(timeDeltaRanges));
+  for (const [unit, range] of unitRanges) {
+    if (Math.abs(seconds) > range || unit === "seconds") {
+      console.log(date, seconds, range);
+      const value = Math.round(seconds / range);
+      console.log(value, unit);
+      return timeDeltaFormatter.format(value, unit);
+    }
   }
-
-  return message;
+  return "ahora";
 }
 
 // @benjavicente mira lo funcional de esta funcion

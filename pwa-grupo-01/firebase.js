@@ -1,8 +1,9 @@
 import { initializeApp } from "firebase/app";
-// import { getAnalytics } from "firebase/analytics";
+import { getAnalytics } from "firebase/analytics";
 import { getAuth, GithubAuthProvider, signInWithPopup, onAuthStateChanged, signInWithRedirect } from "firebase/auth";
 import { getDatabase, ref as refDB, set, onValue } from "firebase/database";
 import { getStorage, ref as refST, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { createSignal, createEffect } from "./js/ui.js";
 import { getUniqueName } from "./js/utils.js";
 /** @typedef {import("firebase/auth").User} User */
@@ -21,11 +22,46 @@ const firebaseConfig = {
   messagingSenderId: "575919704777",
   appId: "1:575919704777:web:e98775f6118a166edf5b18",
   measurementId: "G-YB7Z7VGX4W",
+  vapidKey: "BACoP15CznM-yVp9MApaloANUuUGHmEOWnaOI7tWTvbmQmklcW9EN2zN88UakQcMQAgIggsQMkumIOUh4Ybi1dw",
 };
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const analytics = getAnalytics(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
+const messaging = getMessaging(app);
+function requestPermission() {
+  console.log("Requesting permission...");
+  Notification.requestPermission().then((permission) => {
+    if (permission === "granted") {
+      console.log("Notification permission granted.");
+    }
+  });
+}
+requestPermission();
+getToken(messaging, { vapidKey: firebaseConfig.vapidKey })
+  .then((currentToken) => {
+    if (currentToken) {
+      console.log(currentToken);
+      // Send the token to your server and update the UI if necessary
+      // ...
+    } else {
+      // Show permission request UI
+      console.log("No registration token available. Request permission to generate one.");
+      // ...
+    }
+  })
+  .catch((err) => {
+    console.log("An error occurred while retrieving token. ", err);
+    // ...
+  });
+
+onMessage(messaging, (payload) => {
+  console.log("Message received. ", payload);
+  // ...
+});
 const provider = new GithubAuthProvider();
 export const signIn = () => signInWithRedirect(auth, provider);
 export const logOut = () => auth.signOut();
@@ -36,11 +72,9 @@ export const [user, setUser] = /** @type {[() => User | null, (u: User | null) =
 onAuthStateChanged(auth, setUser);
 
 export async function writePostData(authorID, description) {
-  //generar ID unico
   const postID = Date.now();
   const resourceURL = await uploadResource();
   console.log(resourceURL);
-  const db = getDatabase();
   set(refDB(db, "posts/" + postID), {
     authorID,
     description,
@@ -49,12 +83,9 @@ export async function writePostData(authorID, description) {
 }
 
 function uploadResource() {
-  const storage = getStorage();
-
   const file = document.getElementById("upload-img-input")?.files[0];
   const uniqueName = getUniqueName(file);
   const metadata = { contentType: file.type };
-
   const storageRef = refST(storage, uniqueName);
   return uploadBytes(storageRef, file, metadata)
     .then(() => getDownloadURL(storageRef))
@@ -65,7 +96,6 @@ function uploadResource() {
 }
 
 const [postsData, setPostsData] = createSignal([]);
-const db = getDatabase();
 const starCountRef = refDB(db, "posts");
 onValue(starCountRef, (snapshot) => {
   const data = snapshot.val();
@@ -78,13 +108,11 @@ onValue(starCountRef, (snapshot) => {
 export { postsData };
 
 export async function deletePostData(postID) {
-  const db = getDatabase();
   deleteResource(postID);
   set(refDB(db, "posts/" + postID), null);
 }
 
 export function getOnePost(postID) {
-  const db = getDatabase();
   const starCountRef = refDB(db, "posts/" + postID);
   let postData = [];
   onValue(starCountRef, (snapshot) => {
@@ -97,12 +125,23 @@ export function getOnePost(postID) {
 function deleteResource(postID) {
   const post = getOnePost(postID);
   const url = post?.resourceURL;
-  const storage = getStorage();
   const storageRef = refST(storage, url);
   return deleteObject(storageRef);
 }
 
-// const analytics = getAnalytics(app);
+export async function likePost(postID, userID) {
+  console.log(postID, userID);
+  const post = getOnePost(postID);
+  set(refDB(db, `posts/${postID}/likes/${userID}`), {
+    userID,
+  });
+}
+
+export async function dislikePost(postID, userID) {
+  console.log(postID, userID);
+  const post = getOnePost(postID);
+  set(refDB(db, `posts/${postID}/likes/${userID}`), null);
+}
 
 // signInWithPopup(auth, provider)
 //   .then((result) => {
