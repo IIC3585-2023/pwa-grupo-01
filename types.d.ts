@@ -6,6 +6,10 @@ declare module "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging.js"
   export * from "firebase/messaging";
 }
 
+declare module "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js" {
+  export * from "firebase/messaging/sw";
+}
+
 declare module "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js" {
   export * from "firebase/auth";
 }

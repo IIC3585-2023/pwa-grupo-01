@@ -1,3 +1,5 @@
+import { createSignal } from "./ui.js";
+
 // https://stackoverflow.com/a/69122877
 const timeDeltaFormatter = new Intl.RelativeTimeFormat("es-cl", { numeric: "auto" });
 
@@ -28,3 +30,16 @@ export function getTimeAgo(date) {
 /** @param {string} username */
 export const getLinkGitHubUser = (username) =>
   `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
+
+const [versionSignal, setVersionSignal] = createSignal("N/A");
+const versionBroadcastChannel = new BroadcastChannel("version");
+versionBroadcastChannel.onmessage = (event) => {
+  console.log("Version received", event.data);
+  setVersionSignal(event.data);
+};
+
+export async function getSWVersion() {
+  if (!navigator?.serviceWorker?.controller) return;
+  versionBroadcastChannel.postMessage("version");
+}
+export { versionSignal };
