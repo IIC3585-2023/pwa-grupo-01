@@ -13,6 +13,7 @@ import {
   dislikePost,
 } from "./firebase.js";
 import { getTimeAgo, getLinkGitHubUser } from "./js/utils.js";
+import { cacheData, cacheImageData, cacheImage, cachePost, uncachePost } from "./localDB.js";
 
 /** @typedef {import("./firebase.js").User} User */
 
@@ -123,6 +124,11 @@ function Home(parent) {
               confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
             });
           }
+
+          saveButton.addEventListener("click", () => {
+            cachePost(post);
+            cacheImage(post.resourceURL);
+          });
         }
 
         home.appendChild(postElement);
@@ -143,6 +149,30 @@ function Saved(parent) {
   appendNode(parent, "div", (saved) => {
     saved.innerHTML = "Saved";
   });
+  console.log("Saved");
+
+  const posts = cacheData();
+  console.log(posts);
+  posts.map((post) => {
+    appendNode(parent, "div", (postDiv) => {
+      appendNode(postDiv, "div", (divv) => {
+        divv.innerHTML = post.description;
+      });
+      cacheImageData(post.resourceURL).then((image) => {
+        appendNode(postDiv, "div", function (imgDiv) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(image.blob);
+          imgDiv.appendChild(img);
+        });
+      });
+      appendNode(postDiv, "button", (divv) => {
+        divv.innerHTML = "Borrar";
+        divv.addEventListener("click", () => {
+          uncachePost(post.id, post.resourceURL);
+        });
+      });
+    });
+  });
 }
 
 /** @type {PageComponent} */
@@ -151,7 +181,6 @@ function User(parent) {
     // Logged out
     appendNode(userpage, "div", (loggedOut) => {
       createEffectWithUser((user) => {
-        console.log("user", user);
         loggedOut.style.display = user ? "none" : "block";
       });
 

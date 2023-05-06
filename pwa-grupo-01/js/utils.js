@@ -35,4 +35,5 @@ export const getUniqueName = (file) => {
   return `${filename}-${id}.${extension}`;
 };
 
-export const getLinkGitHubUser = (username) => `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
+export const getLinkGitHubUser = (username) =>
+  `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
