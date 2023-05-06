@@ -7,6 +7,7 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // import { onBackgroundMessage } from "firebase/messaging/sw";
 import { createSignal, createEffect } from "./js/ui.js";
 import { getUniqueName } from "./js/utils.js";
+
 /** @typedef {import("firebase/auth").User} User */
 
 // TODO: Add SDKs for Firebase products that you want to use
