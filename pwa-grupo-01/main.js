@@ -1,20 +1,9 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
-import {
-  app,
-  user,
-  signIn,
-  logOut,
-  postsData,
-  writePostData,
-  deletePostData,
-  likePost,
-  dislikePost,
-} from "./firebase.js";
+import { user, logOut, signIn } from "./js/firebase/auth.js";
+import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
 import { getTimeAgo, getLinkGitHubUser } from "./js/utils.js";
-
-/** @typedef {import("./firebase.js").User} User */
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(user()));
@@ -204,7 +193,7 @@ window.addEventListener("DOMContentLoaded", () => {
   atachMainNavegation();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
-      await navigator.serviceWorker.register(serviceWorkerUrl, { scope: basePath });
+      await navigator.serviceWorker.register(serviceWorkerUrl, { scope: basePath, type: "module" });
     });
   }
 });

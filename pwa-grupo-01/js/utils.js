@@ -25,14 +25,6 @@ export function getTimeAgo(date) {
   return "ahora";
 }
 
-// @benjavicente mira lo funcional de esta funcion
-export const getUniqueName = (file) => {
-  console.log(file);
-  const parts = file.name.split(".");
-  const extension = parts.slice(-1)[0];
-  const filename = parts.slice(0, -1).join(".");
-  const id = Date.now();
-  return `${filename}-${id}.${extension}`;
-};
-
-export const getLinkGitHubUser = (username) => `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
+/** @param {string} username */
+export const getLinkGitHubUser = (username) =>
+  `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;

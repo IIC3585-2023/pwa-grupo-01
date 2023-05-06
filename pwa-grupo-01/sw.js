@@ -1,8 +1,10 @@
 /// <reference lib="webworker" />
 const version = "0.0.5";
 
+import { app } from "./js/firebase/app.js";
+
 self.addEventListener("install", (event) => {
-  console.log("Service Worker installing...", version);
+  console.log(`[${version}] Service Worker installing...`);
 });
 
 self.addEventListener("activate", (event) => {
