@@ -1,11 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, GithubAuthProvider, signInWithPopup, onAuthStateChanged, signInWithRedirect } from "firebase/auth";
+import { getAuth, GithubAuthProvider, onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { getDatabase, ref as refDB, set, onValue } from "firebase/database";
 import { getStorage, ref as refST, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { createSignal, createEffect } from "./js/ui.js";
 import { getUniqueName } from "./js/utils.js";
+
 /** @typedef {import("firebase/auth").User} User */
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -63,7 +64,7 @@ onMessage(messaging, (payload) => {
   // ...
 });
 const provider = new GithubAuthProvider();
-export const signIn = () => signInWithRedirect(auth, provider);
+export const signIn = () => signInWithPopup(auth, provider);
 export const logOut = () => auth.signOut();
 
 export const [user, setUser] = /** @type {[() => User | null, (u: User | null) => void]} */ (
