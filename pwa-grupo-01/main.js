@@ -12,7 +12,7 @@ import {
   likePost,
   dislikePost,
 } from "./firebase.js";
-import { getTimeAgo } from "./js/utils.js";
+import { getTimeAgo, getLinkGitHubUser } from "./js/utils.js";
 
 /** @typedef {import("./firebase.js").User} User */
 
@@ -58,9 +58,17 @@ function Home(parent) {
         const postElement = /** @type {HTMLLIElement} */ (postTemplate.content.cloneNode(true));
 
         const ownerAvatar = querySelect(postElement, ".post-owner-avatar");
+        ownerAvatar.src = post?.authorImg;
+        // fetch(`https://api.github.com/users/${post.authorID}`).then((response) => {
+        //   if (response.ok) {
+        //     response.json().then((data) => {
+        //       ownerAvatar.src = data?.avatar_url;
+        //     })
+        //   }
+        // });
 
         const ownerName = querySelect(postElement, ".post-owner-name");
-        ownerName.innerHTML = post.authorID;
+        ownerName.innerHTML = getLinkGitHubUser(post.authorID);
 
         const createdAt = /** @type {HTMLTimeElement} */ (querySelect(postElement, ".post-created-at"));
         createdAt.innerHTML = getTimeAgo(post.key);
@@ -112,10 +120,8 @@ function Home(parent) {
 
           if (user.reloadUserInfo.screenName === post.authorID) {
             deleteButton.addEventListener("click", () => {
-              deletePostData(post.key);
+              confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
             });
-          } else {
-            deleteButton.remove();
           }
         }
 
@@ -145,6 +151,7 @@ function User(parent) {
     // Logged out
     appendNode(userpage, "div", (loggedOut) => {
       createEffectWithUser((user) => {
+        console.log("user", user);
         loggedOut.style.display = user ? "none" : "block";
       });
 
@@ -164,6 +171,7 @@ function User(parent) {
       appendNode(loggedIn, "img", (userImg) => {
         userImg.style.width = "200px";
         userImg.style.height = "200px";
+        userImg.classList.add("rounded-full");
         createEffectWithLoggedIn((user) => {
           userImg.src = user.photoURL;
         });
@@ -171,7 +179,7 @@ function User(parent) {
 
       appendNode(loggedIn, "div", (userNameDiv) => {
         createEffectWithLoggedIn((user) => {
-          userNameDiv.innerHTML = `<b>Username:</b> <a target="_blank" rel="noopener noreferrer" href="https://github.com/${user.reloadUserInfo.screenName}">@${user.reloadUserInfo.screenName}</a>`;
+          userNameDiv.innerHTML = `<b>Username:</b> @${getLinkGitHubUser(user.reloadUserInfo.screenName)}`;
         });
       });
 
@@ -289,7 +297,7 @@ function atachCreatePost() {
 
     savePostBtn.addEventListener("click", () => {
       try {
-        writePostData(user?.reloadUserInfo?.screenName, uploadCaption.value);
+        writePostData(user?.reloadUserInfo, uploadCaption.value);
         createDialog.close();
         resetUpload();
       } catch (error) {
