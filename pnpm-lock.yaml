@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@cloudflare/workers-types': ^4.20230419.0
   '@types/serviceworker': ^0.0.67
   autoprefixer: ^10.4.14
   concurrently: ^8.0.1
@@ -12,6 +13,7 @@ specifiers:
   tailwindcss: ^3.3.2
 
 dependencies:
+  '@cloudflare/workers-types': 4.20230419.0
   postcss: 8.4.23
   tailwindcss: 3.3.2
 
@@ -37,6 +39,10 @@ packages:
     dependencies:
       regenerator-runtime: 0.13.11
     dev: true
+
+  /@cloudflare/workers-types/4.20230419.0:
+    resolution: {integrity: sha512-MfNBlHrI/ekRkbLtdAo23D4hkXF+3QD92OCwuXxCUK73HtMHuBqkMp9T/8KFbKNRCnz7PzUderc7Jr5m3eeW3g==}
+    dev: false
 
   /@firebase/analytics-compat/0.2.6_kxpn25shies3haknrrqf6rqkti:
     resolution: {integrity: sha512-4MqpVLFkGK7NJf/5wPEEP7ePBJatwYpyjgJ+wQHQGHfzaCDgntOnl9rL2vbVGGKCnRqWtZDIWhctB86UWXaX2Q==}
