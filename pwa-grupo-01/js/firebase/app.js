@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebas
 
 export const firebaseConfig = {
   apiKey: "AIzaSyAUStWhQDubms1kFSaoW6SduSxaUHiUZqY",
-  authDomain: "iic3585-2023.github.io",
+  authDomain: "pwagag.pages.dev",
   projectId: "pwgag-eed34",
   storageBucket: "pwgag-eed34.appspot.com",
   datebaseURL: "https://pwgag-eed34-default-rtdb.firebaseio.com/",
