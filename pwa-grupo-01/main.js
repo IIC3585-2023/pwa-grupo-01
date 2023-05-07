@@ -1,21 +1,12 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
-import {
-  app,
-  user,
-  signIn,
-  logOut,
-  postsData,
-  writePostData,
-  deletePostData,
-  likePost,
-  dislikePost,
-} from "./firebase.js";
-import { getTimeAgo, getLinkGitHubUser } from "./js/utils.js";
+import { user, logOut, signIn } from "./js/firebase/auth.js";
+import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
+import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
+import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
 import { cacheData, cacheImageData, cacheImage, cachePost, uncachePost } from "./localDB.js";
 
-/** @typedef {import("./firebase.js").User} User */
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(user()));
@@ -46,7 +37,7 @@ const postTemplate = /** @type {HTMLTemplateElement} */ (getElById("post-templat
 /** @type {PageComponent} */
 function Home(parent) {
   appendNode(parent, "ul", (home) => {
-    home.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24");
+    home.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24", "h-full");
 
     createEffectWithUser((user) => {
       home.innerHTML = "";
@@ -123,6 +114,8 @@ function Home(parent) {
             deleteButton.addEventListener("click", () => {
               confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
             });
+          } else {
+            deleteButton.remove();
           }
 
           saveButton.addEventListener("click", () => {
@@ -179,6 +172,7 @@ function Saved(parent) {
 function User(parent) {
   appendNode(parent, "div", (userpage) => {
     // Logged out
+    userpage.className = "flex flex-col items-center gap-4 h-full px-2 py-6";
     appendNode(userpage, "div", (loggedOut) => {
       createEffectWithUser((user) => {
         loggedOut.style.display = user ? "none" : "block";
@@ -193,8 +187,9 @@ function User(parent) {
 
     // Logged in
     appendNode(userpage, "div", (loggedIn) => {
+      loggedIn.className = "flex-col items-center gap-4";
       createEffectWithUser((user) => {
-        loggedIn.style.display = user ? "block" : "none";
+        loggedIn.style.display = user ? "flex" : "none";
       });
 
       appendNode(loggedIn, "img", (userImg) => {
@@ -208,13 +203,27 @@ function User(parent) {
 
       appendNode(loggedIn, "div", (userNameDiv) => {
         createEffectWithLoggedIn((user) => {
-          userNameDiv.innerHTML = `<b>Username:</b> @${getLinkGitHubUser(user.reloadUserInfo.screenName)}`;
+          userNameDiv.innerHTML = `@${getLinkGitHubUser(user.reloadUserInfo.screenName)}`;
         });
       });
 
       appendNode(loggedIn, "button", (logoutBtn) => {
         logoutBtn.addEventListener("click", logOut);
         logoutBtn.textContent = "Logout";
+        logoutBtn.classList.add("p-2", "bg-red-500", "rounded-md", "text-white");
+      });
+    });
+
+    appendNode(userpage, "div", (version) => {
+      createEffect(() => {
+        version.innerHTML = `Version: ${versionSignal()}`;
+      });
+    });
+
+    appendNode(userpage, "div", (swVersion) => {
+      swVersion.classList.add("text-center");
+      createEffect(() => {
+        swVersion.innerHTML = `MS token<br>${tokenSignal()}`;
       });
     });
   });
@@ -233,7 +242,12 @@ window.addEventListener("DOMContentLoaded", () => {
   atachMainNavegation();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
-      await navigator.serviceWorker.register(serviceWorkerUrl, { scope: basePath });
+      const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {
+        scope: basePath,
+        type: "module",
+      });
+      initializeNotificationService(registration).then(() => requestNotificationPermission());
+      getSWVersion(registration);
     });
   }
 });

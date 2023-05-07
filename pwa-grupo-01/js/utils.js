@@ -1,3 +1,5 @@
+import { createSignal } from "./ui.js";
+
 // https://stackoverflow.com/a/69122877
 const timeDeltaFormatter = new Intl.RelativeTimeFormat("es-cl", { numeric: "auto" });
 
@@ -25,15 +27,20 @@ export function getTimeAgo(date) {
   return "ahora";
 }
 
-// @benjavicente mira lo funcional de esta funcion
-export const getUniqueName = (file) => {
-  console.log(file);
-  const parts = file.name.split(".");
-  const extension = parts.slice(-1)[0];
-  const filename = parts.slice(0, -1).join(".");
-  const id = Date.now();
-  return `${filename}-${id}.${extension}`;
-};
-
+/** @param {string} username */
 export const getLinkGitHubUser = (username) =>
   `<a target="_blank" rel="noopener noreferrer" href="https://github.com/${username}">${username}</a>`;
+
+const [versionSignal, setVersionSignal] = createSignal("N/A");
+const versionBroadcastChannel = new BroadcastChannel("version");
+versionBroadcastChannel.onmessage = (event) => {
+  console.log("Version received", event.data);
+  setVersionSignal(event.data);
+};
+
+
+export async function getSWVersion() {
+  if (!navigator?.serviceWorker?.controller) return;
+  versionBroadcastChannel.postMessage("version");
+}
+export { versionSignal };

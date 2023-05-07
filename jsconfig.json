@@ -1,5 +1,5 @@
 {
-  "include": ["./pwa-grupo-01/**/*"],
+  "include": ["./pwa-grupo-01/**/*", "types.d.ts"],
   "compilerOptions": {
     "strict": true,
     "module": "ESNext",
