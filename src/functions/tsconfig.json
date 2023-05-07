@@ -1,5 +1,5 @@
 {
-  "files": ["./_middleware.js"],
+  "files": ["_middleware.ts"],
   "compilerOptions": {
     "target": "es2021",
     "lib": ["es2021"],
