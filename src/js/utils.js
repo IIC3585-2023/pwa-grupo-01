@@ -36,6 +36,7 @@ const versionBroadcastChannel = new BroadcastChannel("version");
 versionBroadcastChannel.onmessage = (event) => {
   console.log("Version received", event.data);
   setVersionSignal(event.data);
+  versionBroadcastChannel.close();
 };
 
 export async function getSWVersion() {
