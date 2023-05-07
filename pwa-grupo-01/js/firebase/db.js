@@ -76,7 +76,7 @@ export async function deletePostData(postID) {
 
 export function getOnePost(postID) {
   const starCountRef = refDB(db, "posts/" + postID);
-  postData = [];
+  let postData = [];
   onValue(starCountRef, (snapshot) => {
     const data = snapshot.val();
     postData = data;

@@ -112,6 +112,8 @@ function Home(parent) {
             deleteButton.addEventListener("click", () => {
               confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
             });
+          } else {
+            deleteButton.remove();
           }
         }
 
