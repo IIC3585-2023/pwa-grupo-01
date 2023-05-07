@@ -18,12 +18,6 @@
   },
   "hosting": {
     "public": "pwa-grupo-01",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   }
 }
