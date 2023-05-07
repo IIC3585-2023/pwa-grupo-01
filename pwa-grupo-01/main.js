@@ -26,8 +26,8 @@ function getPWADisplayMode() {
 //   window.location.href = newUrl;
 // }
 
-const basePath = "/pwa-grupo-01/";
-const serviceWorkerUrl = "/pwa-grupo-01/sw.js";
+const basePath = new URL(window.location.href).pathname;
+const serviceWorkerUrl = `${basePath.replace(/\/+$/, "")}/sw.js`;
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
