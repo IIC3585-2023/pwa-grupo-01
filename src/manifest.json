@@ -2,25 +2,25 @@
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
   "short_name": "PWgAg",
   "name": "PWgAg",
-  "scope": "/pwa-grupo-01/",
-  "start_url": "/pwa-grupo-01/",
+  "scope": "/",
+  "start_url": "/",
   "display": "fullscreen",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "/pwa-grupo-01/icons/PWgAg.svg",
+      "src": "/icons/PWgAg.svg",
       "type": "image/svg+xml",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/pwa-grupo-01/icons/PWgAg-192.png",
+      "src": "/icons/PWgAg-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/pwa-grupo-01/icons/PWgAg-512.png",
+      "src": "/icons/PWgAg-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }

@@ -5,10 +5,10 @@
   "type": "module",
   "packageManager": "pnpm@7.11.0",
   "scripts": {
-    "tailwind:watch": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css --watch",
+    "tailwind:watch": "tailwindcss -i ./style.css -o ./src/style.css --watch",
     "dev": "concurrently --raw --hide 1 \"npm:preview\" \"npm:tailwind:watch\"",
-    "build": "tailwindcss -i ./style.css -o ./pwa-grupo-01/style.css",
-    "preview": "serve",
+    "build": "tailwindcss -i ./style.css -o ./src/style.css",
+    "preview": "serve src",
     "format": "prettier --write \"**/*.{html,js,css}\""
   },
   "devDependencies": {

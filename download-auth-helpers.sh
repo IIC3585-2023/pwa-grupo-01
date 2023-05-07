@@ -1,4 +1,4 @@
-cd pwa-grupo-01
+cd src
 mkdir -p __/auth
 cd __/auth
 
