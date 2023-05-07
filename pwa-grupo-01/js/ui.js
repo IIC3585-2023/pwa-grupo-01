@@ -71,9 +71,10 @@ export async function animateDomUpdate(fn) {
 
 /** @typedef {keyof HTMLElementTagNameMap} HTMLElementKey */
 /**
+ * @template {HTMLElementKey} T
  * @param {HTMLElement} parent
- * @param {HTMLElementKey} element
- * @param {((el: HTMLElement) => void) | undefined} fn
+ * @param {T} element
+ * @param {((el: HTMLElementTagNameMap[T]) => void) | undefined} fn
  **/
 export function appendNode(parent, element, fn = undefined) {
   const el = document.createElement(element);

@@ -1,7 +1,7 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
-import { user, logOut, signIn } from "./js/firebase/auth.js";
+import { user, logOut, signIn, handleAuthTokenFromGitHub, signInUrl } from "./js/firebase/auth.js";
 import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
 import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
@@ -147,9 +147,10 @@ function User(parent) {
         loggedOut.style.display = user ? "none" : "block";
       });
 
-      appendNode(loggedOut, "button", (loginBtn) => {
+      appendNode(loggedOut, "a", (loginBtn) => {
         loginBtn.textContent = "Login";
         loginBtn.classList.add("p-2", "bg-blue-500", "rounded-md", "text-white");
+        loginBtn.href = signInUrl();
         loginBtn.addEventListener("click", signIn);
       });
     });
@@ -206,6 +207,7 @@ const pages = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
+  handleAuthTokenFromGitHub();
   atachCreatePost();
   atachUserImageInNav();
   atachMainNavegation();

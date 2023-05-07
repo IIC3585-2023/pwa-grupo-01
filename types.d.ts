@@ -30,4 +30,8 @@ declare module "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js" 
   export * from "firebase/database";
 }
 
+declare module "https://www.gstatic.com/firebasejs/9.21.0/firebase-functions.js" {
+  export * from "firebase/functions";
+}
+
 type User = import("firebase/auth").User;
