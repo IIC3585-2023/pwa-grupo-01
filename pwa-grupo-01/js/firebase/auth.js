@@ -30,15 +30,13 @@ export function signInUrl() {
   return url.toString();
 }
 
-const exchangeGitHubCodeForToken = httpsCallable(functions, "exchangeGitHubCodeForToken");
 export async function handleAuthTokenFromGitHub() {
   const url = new URL(window.location.href);
   const code = url.searchParams.get("code");
   if (code) {
-    const result = /** @type {import("firebase/functions").HttpsCallableResult<{ accessToken: string }>} */ (
-      await exchangeGitHubCodeForToken({ code })
-    );
-    const accessToken = result.data.accessToken;
+    const response = await fetch("http://localhost:3000", { method: "POST", body: code });
+    const result = await response.json();
+    const accessToken = result.accessToken;
     const credential = GithubAuthProvider.credential(accessToken);
     await signInWithCredential(auth, credential);
   }
