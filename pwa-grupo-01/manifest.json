@@ -4,6 +4,7 @@
   "name": "PWgAg",
   "scope": "/pwa-grupo-01/",
   "start_url": "/pwa-grupo-01/",
+  "offline_page": "/pwa-grupo-01?offline=true",
   "display": "fullscreen",
   "background_color": "#000000",
   "theme_color": "#000000",
