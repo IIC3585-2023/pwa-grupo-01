@@ -21,17 +21,19 @@ const storage = getStorage(app);
 /**
  * @param {any} authorInfo
  * @param {string} description
+ * @param {File} img
  */
-export async function writePostData(authorInfo, description) {
+export async function writePostData(authorInfo, description, img) {
   const postID = Date.now();
-  const resourceURL = await uploadResource();
-  console.log(resourceURL);
+  const resourceURL = await uploadResource(img);
+
   setDB(refDB(db, "posts/" + postID), {
     authorID: authorInfo.screenName,
     authorImg: authorInfo.photoUrl,
     description,
     resourceURL,
   });
+  return postID;
 }
 
 /** @param {File} file */
@@ -44,12 +46,12 @@ export const getUniqueName = (file) => {
   return `${filename}-${id}.${extension}`;
 };
 
-function uploadResource() {
-  const file = document.getElementById("upload-img-input")?.files[0];
-  const uniqueName = getUniqueName(file);
-  const metadata = { contentType: file.type };
+/** @param {File} img */
+function uploadResource(img) {
+  const uniqueName = getUniqueName(img);
+  const metadata = { contentType: img.type };
   const storageRef = refST(storage, uniqueName);
-  return uploadBytes(storageRef, file, metadata)
+  return uploadBytes(storageRef, img, metadata)
     .then(() => getDownloadURL(storageRef))
     .then((url) => {
       console.log("File available at", url);

@@ -15,6 +15,20 @@
   display: block;
 }
 
+#create-btn {
+  transition: transform 0.3s ease-in-out;
+  transform-origin: right bottom;
+  view-transition-name: create-btn;
+}
+
+#create-btn[disabled] {
+  transform: scale(0);
+}
+
+.new-post {
+  view-transition-name: new-post;
+}
+
 .active #user-logged-in-btn {
   @apply outline outline-offset-2;
 }

@@ -13,7 +13,7 @@ const githubProvider = new GithubAuthProvider();
 export const signIn = () => signInWithPopup(auth, githubProvider);
 export const logOut = () => auth.signOut();
 
-export const [user, setUser] = /** @type {[() => User | null, (u: User | null) => void]} */ (
+export const [userSignal, setUser] = /** @type {[() => User | null, (u: User | null) => void]} */ (
   createSignal(auth.currentUser)
 );
 onAuthStateChanged(auth, setUser);

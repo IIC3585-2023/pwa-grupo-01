@@ -44,3 +44,11 @@ export async function getSWVersion() {
   versionBroadcastChannel.postMessage("version");
 }
 export { versionSignal };
+
+/** @param {HTMLImageElement} img */
+export const waitForImageLoad = (img) =>
+  new Promise((resolve, reject) => {
+    if (img.complete) resolve(undefined);
+    else img.onload = () => resolve(undefined);
+    img.onerror = () => reject(undefined);
+  });

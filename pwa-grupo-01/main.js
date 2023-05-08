@@ -1,13 +1,13 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
-import { user, logOut, signIn } from "./js/firebase/auth.js";
+import { userSignal, logOut, signIn } from "./js/firebase/auth.js";
 import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
-import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
+import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal, waitForImageLoad } from "./js/utils.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
 
 /** @param {(user: User | null) => void} fn */
-const createEffectWithUser = (fn) => createEffect(() => fn(user()));
+const createEffectWithUser = (fn) => createEffect(() => fn(userSignal()));
 /** @param {(user: User) => void} fn */
 const createEffectWithLoggedIn = (fn) => createEffectWithUser((u) => u && fn(u));
 
@@ -70,6 +70,7 @@ function Home(parent) {
 
         const img = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-img"));
         img.src = post.resourceURL;
+        img.id = `img-${post.key}`;
 
         const caption = querySelect(postElement, ".post-caption");
         caption.innerHTML = post.description;
@@ -206,9 +207,9 @@ const pages = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
-  atachCreatePost();
+  const pageSignal = atachMainNavegation();
+  atachCreatePost(pageSignal);
   atachUserImageInNav();
-  atachMainNavegation();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {
@@ -258,8 +259,12 @@ function atachMainNavegation() {
       contentEl.innerHTML = "";
       pageElement.component(contentEl);
     });
+
+    contentEl.classList.remove("to-right", "to-left");
     oldPage = pageElement;
   });
+
+  return page;
 }
 
 function atachUserImageInNav() {
@@ -270,85 +275,108 @@ function atachUserImageInNav() {
   });
 }
 
-function atachCreatePost() {
+/** @param {() => (typeof pages[0])} pageSignal */
+function atachCreatePost(pageSignal) {
+  const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
+
   createEffectWithUser((user) => {
-    const createBtn /** @type {HTMLInputElement} */ = getElById("create-btn");
-    if (!user) {
-      createBtn.classList.add("hidden");
-      createBtn.classList.remove("flex");
-      return;
+    const { component } = pageSignal();
+    const isDisabled = component !== Home || !user;
+    createBtn.disabled = isDisabled;
+  });
+
+  const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
+  const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
+  const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
+  const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
+  const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
+  const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
+  const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
+  const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
+  const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
+
+  createBtn.addEventListener("click", () => createDialog.showModal());
+
+  function resetUpload() {
+    clearImgInput();
+    uploadCaption.value = "";
+  }
+
+  function clearImgInput() {
+    uploadImgInput.value = "";
+    uploadImgInput.dispatchEvent(new Event("change"));
+  }
+
+  function closeDialog() {
+    createDialog.close();
+    resetUpload();
+  }
+
+  uploadImgRemove.addEventListener("click", () => clearImgInput());
+  cancelUploadBtn.addEventListener("click", () => closeDialog());
+
+  uploadImgInput.addEventListener("change", () => {
+    if (!uploadImgInput.files) return;
+    const [file] = uploadImgInput.files;
+
+    if (file) {
+      uploadImgDnD.style.display = "none";
+      uploadPreviewContainer.style.display = "";
+      uploadPreviewImg.src = URL.createObjectURL(file);
+    } else {
+      uploadImgDnD.style.display = "";
+      uploadPreviewImg.src = "";
+      uploadPreviewContainer.style.display = "none";
     }
-    createBtn.classList.remove("hidden");
-    createBtn.classList.add("flex");
-    const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
-    const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
-    const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
-    const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
-    const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
-    const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
-    const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
-    const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
-    const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
+  });
 
-    function resetUpload() {
-      clearImgInput();
-      uploadCaption.value = "";
-    }
+  // Drag and drop
+  uploadImgDnD.ondrop = (e) => {
+    if (!uploadImgInput.files || !e.dataTransfer) return;
+    e.preventDefault();
+    uploadImgInput.files = e.dataTransfer.files;
+    uploadImgInput.dispatchEvent(new Event("change"));
+  };
 
-    function clearImgInput() {
-      uploadImgInput.value = "";
-      uploadImgInput.dispatchEvent(new Event("change"));
-    }
+  uploadImgDnD.ondragover = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.add("dragover");
+  };
 
-    createBtn.addEventListener("click", () => createDialog.showModal());
+  uploadImgDnD.ondragleave = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.remove("dragover");
+  };
 
-    cancelUploadBtn.addEventListener("click", () => {
-      createDialog.close();
-      resetUpload();
-    });
-
-    savePostBtn.addEventListener("click", () => {
-      try {
-        writePostData(user?.reloadUserInfo, uploadCaption.value);
-        createDialog.close();
-        resetUpload();
-      } catch (error) {
-        console.error(error);
+  /** @param {File} img, @param {User} user */
+  async function createPost(img, user) {
+    uploadPreviewImg.classList.add("new-post");
+    /** @type {HTMLImageElement | undefined} */
+    let post;
+    animateDomUpdate(async () => {
+      const postId = await writePostData(user?.reloadUserInfo, uploadCaption.value, img);
+      uploadPreviewImg.classList.remove("new-post");
+      closeDialog();
+      post = /** @type {HTMLImageElement} */ (getElById("img-" + postId));
+      if (post) {
+        post.classList.add("new-post");
+        await waitForImageLoad(post);
       }
     });
-    // Image preview
-    uploadImgInput.addEventListener("change", () => {
-      if (!uploadImgInput.files) return;
-      const [file] = uploadImgInput.files;
+    if (!post) return;
 
-      if (file) {
-        uploadImgDnD.style.display = "none";
-        uploadPreviewContainer.style.display = "";
-        uploadPreviewImg.src = URL.createObjectURL(file);
-      } else {
-        uploadImgDnD.style.display = "";
-        uploadPreviewImg.src = "";
-        uploadPreviewContainer.style.display = "none";
-      }
-    });
-    uploadImgRemove.addEventListener("click", () => clearImgInput());
+    post.classList.remove("new-post");
+  }
 
-    // Drag and drop
-    uploadImgDnD.ondrop = (e) => {
-      if (!uploadImgInput.files || !e.dataTransfer) return;
-      e.preventDefault();
-      uploadImgInput.files = e.dataTransfer.files;
-      uploadImgInput.dispatchEvent(new Event("change"));
-    };
-
-    uploadImgDnD.ondragover = (e) => {
-      e.preventDefault();
-      uploadImgDnD.classList.add("dragover");
-    };
-
-    uploadImgDnD.ondragleave = (e) => {
-      e.preventDefault();
-      uploadImgDnD.classList.remove("dragover");
-    };
+  savePostBtn.addEventListener("click", async () => {
+    const img = uploadImgInput.files?.[0];
+    if (!img) return alert("Please select an image");
+    const user = userSignal();
+    if (!user) return alert("Please login to create a post");
+    try {
+      await createPost(img, user);
+    } catch (error) {
+      console.error(error);
+    }
   });
 }
