@@ -15,7 +15,6 @@ const [tokenSignal, setToken] = createSignal("");
 /** @param {ServiceWorkerRegistration} serviceWorkerRegistration */
 export async function initializeNotificationService(serviceWorkerRegistration) {
   const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey, serviceWorkerRegistration });
-  console.log("Token:", token);
   setToken(token);
   onMessage(messaging, (payload) => {
     console.log("Message received. ", payload);
