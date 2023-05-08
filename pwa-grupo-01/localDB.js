@@ -75,7 +75,7 @@ export function isPostSavedInCache(id) {
   return postsCacheSignal().some((post) => post.key === id);
 }
 
-async function addImageToCache(imageUrl) {
+async function addImageToCache(imageUrl, img) {
   // Open a connection to the database
   const { localDB } = await store;
 

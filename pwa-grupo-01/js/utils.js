@@ -34,8 +34,9 @@ export const getLinkGitHubUser = (username) =>
 const [versionSignal, setVersionSignal] = createSignal("N/A");
 const versionBroadcastChannel = new BroadcastChannel("version");
 versionBroadcastChannel.onmessage = (event) => {
-  console.log("Version received", event.data);
   setVersionSignal(event.data);
+  if (event.data === "version") return;
+  versionBroadcastChannel.close();
 };
 
 
@@ -44,3 +45,11 @@ export async function getSWVersion() {
   versionBroadcastChannel.postMessage("version");
 }
 export { versionSignal };
+
+/** @param {HTMLImageElement} img */
+export const waitForImageLoad = (img) =>
+  new Promise((resolve, reject) => {
+    if (img.complete) resolve(undefined);
+    else img.onload = () => resolve(undefined);
+    img.onerror = () => reject(undefined);
+  });

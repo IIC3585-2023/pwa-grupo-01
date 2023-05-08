@@ -27,6 +27,7 @@ export function renderPost(post, user, { isInSaved = false } = {}) {
 
   const img = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-img"));
   img.src = post.resourceURL;
+  img.id = `img-${post.key}`;
 
   const caption = querySelect(postElement, ".post-caption");
   caption.innerHTML = post.description;

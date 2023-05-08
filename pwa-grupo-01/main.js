@@ -1,15 +1,15 @@
 "use strict";
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
-import { user, logOut, signIn } from "./js/firebase/auth.js";
 import { writePostData, postsData } from "./js/firebase/db.js";
-import { getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
+import { getLinkGitHubUser, getSWVersion, versionSignal, waitForImageLoad } from "./js/utils.js";
+import { userSignal, logOut, signIn } from "./js/firebase/auth.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
 import { postsCacheSignal } from "./localDB.js";
 import { renderPost } from "./js/render.js";
 
 /** @param {(user: User | null) => void} fn */
-const createEffectWithUser = (fn) => createEffect(() => fn(user()));
+const createEffectWithUser = (fn) => createEffect(() => fn(userSignal()));
 /** @param {(user: User) => void} fn */
 const createEffectWithLoggedIn = (fn) => createEffectWithUser((u) => u && fn(u));
 
@@ -28,8 +28,8 @@ function getPWADisplayMode() {
 //   window.location.href = newUrl;
 // }
 
-const basePath = "/pwa-grupo-01/";
-const serviceWorkerUrl = "/pwa-grupo-01/sw.js";
+const basePath = new URL(window.location.href).pathname;
+const serviceWorkerUrl = `${basePath.replace(/\/+$/, "")}/sw.js`;
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
@@ -56,8 +56,9 @@ function Likes(parent) {
 
 /** @type {PageComponent} */
 function Saved(parent) {
-  appendNode(parent, "div", (saved) => {
-    saved.innerHTML = "Saved";
+  appendNode(parent, "ul", (saved) => {
+    saved.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24", "h-full");
+
     createEffectWithUser((user) => {
       saved.innerHTML = "";
       for (const post of postsCacheSignal()) {
@@ -136,9 +137,9 @@ const pages = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
+  atachMainNavegation();
   atachCreatePost();
   atachUserImageInNav();
-  atachMainNavegation();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {
@@ -154,6 +155,7 @@ window.addEventListener("DOMContentLoaded", () => {
 function atachMainNavegation() {
   const contentEl = getElById("content");
   const logoBtn = getElById("logo-btn");
+  const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
 
   const pagesWithBtns = pages.map((page) => ({ ...page, btn: getElById(page.btnId) }));
 
@@ -167,7 +169,10 @@ function atachMainNavegation() {
   }
 
   let oldPage = page();
-  createEffect(() => {
+
+  createEffectWithUser((user) => {
+    createBtn.disabled = !user || page().component !== Home;
+
     if (oldPage === page()) {
       // En pruner render
       oldPage = page();
@@ -178,18 +183,30 @@ function atachMainNavegation() {
 
     const pageElement = page();
     oldPage.btn.classList.remove("active");
-    pageElement.btn.classList.add("active");
 
     const slideToTheRight = pagesWithBtns.indexOf(oldPage) > pagesWithBtns.indexOf(pageElement);
-    contentEl.classList.toggle("to-right", slideToTheRight);
-    contentEl.classList.toggle("to-left", !slideToTheRight);
 
-    animateDomUpdate(() => {
-      contentEl.innerHTML = "";
-      pageElement.component(contentEl);
-    });
-    oldPage = pageElement;
+    animateDomUpdate(
+      () => {
+        contentEl.classList.toggle("to-right", slideToTheRight);
+        contentEl.classList.toggle("to-left", !slideToTheRight);
+        pageElement.btn.classList.add("active");
+
+        const { component } = page();
+        const isDisabled = component !== Home || !user;
+        createBtn.disabled = isDisabled;
+
+        contentEl.innerHTML = "";
+        pageElement.component(contentEl);
+      },
+      () => {
+        contentEl.classList.remove("to-right", "to-left");
+        oldPage = pageElement;
+      }
+    );
   });
+
+  return page;
 }
 
 function atachUserImageInNav() {
@@ -201,84 +218,103 @@ function atachUserImageInNav() {
 }
 
 function atachCreatePost() {
-  createEffectWithUser((user) => {
-    const createBtn /** @type {HTMLInputElement} */ = getElById("create-btn");
-    if (!user) {
-      createBtn.classList.add("hidden");
-      createBtn.classList.remove("flex");
-      return;
+  const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
+  const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
+  const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
+  const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
+  const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
+  const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
+  const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
+  const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
+  const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
+  const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
+
+  createBtn.addEventListener("click", () => createDialog.showModal());
+
+  function resetUpload() {
+    clearImgInput();
+    uploadCaption.value = "";
+  }
+
+  function clearImgInput() {
+    uploadImgInput.value = "";
+    uploadImgInput.dispatchEvent(new Event("change"));
+  }
+
+  function closeDialog() {
+    createDialog.close();
+    resetUpload();
+  }
+
+  uploadImgRemove.addEventListener("click", () => clearImgInput());
+  cancelUploadBtn.addEventListener("click", () => closeDialog());
+
+  uploadImgInput.addEventListener("change", () => {
+    if (!uploadImgInput.files) return;
+    const [file] = uploadImgInput.files;
+
+    if (file) {
+      uploadImgDnD.style.display = "none";
+      uploadPreviewContainer.style.display = "";
+      uploadPreviewImg.src = URL.createObjectURL(file);
+    } else {
+      uploadImgDnD.style.display = "";
+      uploadPreviewImg.src = "";
+      uploadPreviewContainer.style.display = "none";
     }
-    createBtn.classList.remove("hidden");
-    createBtn.classList.add("flex");
-    const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
-    const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
-    const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
-    const uploadPreviewContainer = /** @type {HTMLDivElement} */ (getElById("upload-img-preview-container"));
-    const uploadPreviewImg = /** @type {HTMLImageElement} */ (getElById("upload-img-preview"));
-    const uploadImgRemove = /** @type {HTMLButtonElement} */ (getElById("upload-img-remove"));
-    const uploadCaption = /** @type {HTMLInputElement} */ (getElById("upload-caption"));
-    const cancelUploadBtn /** @type {HTMLInputElement} */ = getElById("cancel-upload-btn");
-    const savePostBtn /** @type {HTMLInputElement} */ = getElById("upload-submit");
+  });
 
-    function resetUpload() {
-      clearImgInput();
-      uploadCaption.value = "";
-    }
+  // Drag and drop
+  uploadImgDnD.ondrop = (e) => {
+    if (!uploadImgInput.files || !e.dataTransfer) return;
+    e.preventDefault();
+    uploadImgInput.files = e.dataTransfer.files;
+    uploadImgInput.dispatchEvent(new Event("change"));
+  };
 
-    function clearImgInput() {
-      uploadImgInput.value = "";
-      uploadImgInput.dispatchEvent(new Event("change"));
-    }
+  uploadImgDnD.ondragover = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.add("dragover");
+  };
 
-    createBtn.addEventListener("click", () => createDialog.showModal());
+  uploadImgDnD.ondragleave = (e) => {
+    e.preventDefault();
+    uploadImgDnD.classList.remove("dragover");
+  };
 
-    cancelUploadBtn.addEventListener("click", () => {
-      createDialog.close();
-      resetUpload();
-    });
-
-    savePostBtn.addEventListener("click", () => {
-      try {
-        writePostData(user?.reloadUserInfo, uploadCaption.value);
-        createDialog.close();
-        resetUpload();
-      } catch (error) {
-        console.error(error);
+  /** @param {File} img, @param {User} user */
+  async function createPost(img, user) {
+    uploadPreviewImg.classList.add("new-post");
+    /** @type {HTMLImageElement | undefined} */
+    let post;
+    animateDomUpdate(
+      async () => {
+        const postId = await writePostData(user?.reloadUserInfo, uploadCaption.value, img);
+        uploadPreviewImg.classList.remove("new-post");
+        post = /** @type {HTMLImageElement} */ (getElById("img-" + postId));
+        if (post) {
+          post.classList.add("new-post");
+          await waitForImageLoad(post);
+        }
+        console.log("animating post");
+        closeDialog();
+      },
+      () => {
+        if (!post) return;
+        post.classList.remove("new-post");
       }
-    });
-    // Image preview
-    uploadImgInput.addEventListener("change", () => {
-      if (!uploadImgInput.files) return;
-      const [file] = uploadImgInput.files;
+    );
+  }
 
-      if (file) {
-        uploadImgDnD.style.display = "none";
-        uploadPreviewContainer.style.display = "";
-        uploadPreviewImg.src = URL.createObjectURL(file);
-      } else {
-        uploadImgDnD.style.display = "";
-        uploadPreviewImg.src = "";
-        uploadPreviewContainer.style.display = "none";
-      }
-    });
-    uploadImgRemove.addEventListener("click", () => clearImgInput());
-
-    // Drag and drop
-    uploadImgDnD.ondrop = (e) => {
-      if (!uploadImgInput.files || !e.dataTransfer) return;
-      e.preventDefault();
-      uploadImgInput.files = e.dataTransfer.files;
-      uploadImgInput.dispatchEvent(new Event("change"));
-    };
-
-    uploadImgDnD.ondragover = (e) => {
-      e.preventDefault();
-      uploadImgDnD.classList.add("dragover");
-    };
-
-    uploadImgDnD.ondragleave = (e) => {
-      e.preventDefault();
-      uploadImgDnD.classList.remove("dragover");
-    };
+  savePostBtn.addEventListener("click", async () => {
+    const img = uploadImgInput.files?.[0];
+    if (!img) return alert("Please select an image");
+    const user = userSignal();
+    if (!user) return alert("Please login to create a post");
+    try {
+      await createPost(img, user);
+    } catch (error) {
+      console.error(error);
+    }
   });
 }
