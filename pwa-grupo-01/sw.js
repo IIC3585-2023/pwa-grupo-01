@@ -33,5 +33,5 @@ self.onmessage = (event) => {
 
 const versionBroadcastChannel = new BroadcastChannel("version");
 versionBroadcastChannel.onmessage = (event) => {
-  versionBroadcastChannel.postMessage(version);
+  if (event.data === "version") versionBroadcastChannel.postMessage(version);
 };
