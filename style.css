@@ -99,3 +99,7 @@ html[data-loggedin="true"] #user-logged-out-btn {
 ::view-transition-old(content-to-left) {
   animation: 300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-out-to-left;
 }
+
+::view-transition-group(create-btn) {
+  z-index: 999;
+}

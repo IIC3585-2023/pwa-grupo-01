@@ -111,7 +111,7 @@ function Home(parent) {
 
           if (user.reloadUserInfo.screenName === post.authorID) {
             deleteButton.addEventListener("click", () => {
-              confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
+              confirm("¿Estás seguro/a de que quieres eliminar esta publicación?") && deletePostData(post.key);
             });
           } else {
             deleteButton.remove();
@@ -225,6 +225,7 @@ window.addEventListener("DOMContentLoaded", () => {
 function atachMainNavegation() {
   const contentEl = getElById("content");
   const logoBtn = getElById("logo-btn");
+  const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
 
   const pagesWithBtns = pages.map((page) => ({ ...page, btn: getElById(page.btnId) }));
 
@@ -238,7 +239,10 @@ function atachMainNavegation() {
   }
 
   let oldPage = page();
-  createEffect(() => {
+
+  createEffectWithUser((user) => {
+    createBtn.disabled = !user || page().component !== Home;
+
     if (oldPage === page()) {
       // En pruner render
       oldPage = page();
@@ -249,19 +253,27 @@ function atachMainNavegation() {
 
     const pageElement = page();
     oldPage.btn.classList.remove("active");
-    pageElement.btn.classList.add("active");
 
     const slideToTheRight = pagesWithBtns.indexOf(oldPage) > pagesWithBtns.indexOf(pageElement);
-    contentEl.classList.toggle("to-right", slideToTheRight);
-    contentEl.classList.toggle("to-left", !slideToTheRight);
 
-    animateDomUpdate(() => {
-      contentEl.innerHTML = "";
-      pageElement.component(contentEl);
-    });
+    animateDomUpdate(
+      () => {
+        contentEl.classList.toggle("to-right", slideToTheRight);
+        contentEl.classList.toggle("to-left", !slideToTheRight);
+        pageElement.btn.classList.add("active");
 
-    contentEl.classList.remove("to-right", "to-left");
-    oldPage = pageElement;
+        const { component } = page();
+        const isDisabled = component !== Home || !user;
+        createBtn.disabled = isDisabled;
+
+        contentEl.innerHTML = "";
+        pageElement.component(contentEl);
+      },
+      () => {
+        contentEl.classList.remove("to-right", "to-left");
+        oldPage = pageElement;
+      }
+    );
   });
 
   return page;
@@ -275,16 +287,8 @@ function atachUserImageInNav() {
   });
 }
 
-/** @param {() => (typeof pages[0])} pageSignal */
-function atachCreatePost(pageSignal) {
+function atachCreatePost() {
   const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
-
-  createEffectWithUser((user) => {
-    const { component } = pageSignal();
-    const isDisabled = component !== Home || !user;
-    createBtn.disabled = isDisabled;
-  });
-
   const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
   const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));
   const uploadImgDnD = /** @type {HTMLLabelElement} */ (getElById("upload-img-dnd"));
@@ -353,19 +357,23 @@ function atachCreatePost(pageSignal) {
     uploadPreviewImg.classList.add("new-post");
     /** @type {HTMLImageElement | undefined} */
     let post;
-    animateDomUpdate(async () => {
-      const postId = await writePostData(user?.reloadUserInfo, uploadCaption.value, img);
-      uploadPreviewImg.classList.remove("new-post");
-      closeDialog();
-      post = /** @type {HTMLImageElement} */ (getElById("img-" + postId));
-      if (post) {
-        post.classList.add("new-post");
-        await waitForImageLoad(post);
+    animateDomUpdate(
+      async () => {
+        const postId = await writePostData(user?.reloadUserInfo, uploadCaption.value, img);
+        uploadPreviewImg.classList.remove("new-post");
+        post = /** @type {HTMLImageElement} */ (getElById("img-" + postId));
+        if (post) {
+          post.classList.add("new-post");
+          await waitForImageLoad(post);
+        }
+        console.log("animating post");
+        closeDialog();
+      },
+      () => {
+        if (!post) return;
+        post.classList.remove("new-post");
       }
-    });
-    if (!post) return;
-
-    post.classList.remove("new-post");
+    );
   }
 
   savePostBtn.addEventListener("click", async () => {

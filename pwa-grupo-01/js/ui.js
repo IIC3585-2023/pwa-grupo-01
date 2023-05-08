@@ -59,13 +59,14 @@ export function createEffect(fn) {
   run();
 }
 
-/** @param {() => void} fn */
-export async function animateDomUpdate(fn) {
+/** @param {() => Promise<void> | void} fn */
+export async function animateDomUpdate(fn, onFinish = () => {}) {
   if ("startViewTransition" in document) {
     // @ts-ignore
-    await document.startViewTransition(fn);
+    const transition = await document.startViewTransition(fn);
+    transition.finished.then(onFinish);
   } else {
-    fn();
+    await fn();
   }
 }
 
