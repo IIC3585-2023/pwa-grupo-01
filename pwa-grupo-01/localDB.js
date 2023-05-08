@@ -1,167 +1,119 @@
-import { createSignal } from "./js/ui.js";
+import { createEffect, createSignal } from "./js/ui.js";
 
-// Open a connection to the database
-let localDB;
-const requestlocalDB = indexedDB.open("posts", 1);
-
-requestlocalDB.onupgradeneeded = function (event) {
-  // Create an object store for the posts
-  const localDB = event.target.result;
-  const objectStore = localDB.createObjectStore("posts", { keyPath: "id", autoIncrement: true });
-};
-
-requestlocalDB.onsuccess = function (event) {
-  localDB = event.target.result;
-};
-
-requestlocalDB.onerror = function (event) {
-  console.log("Error opening database");
-};
-
-const [cacheData, setCacheData] = createSignal([]);
-requestlocalDB.onsuccess = function (event) {
-  localDB = event.target.result;
-
-  // Retrieve all the posts from the object store
-  const transaction = localDB.transaction("posts", "readonly");
-  const objectStore = transaction.objectStore("posts");
-  const request = objectStore.getAll();
-
-  request.onsuccess = function (event) {
-    const posts = event.target.result;
-    console.log("All posts:", posts);
-    setCacheData(posts);
-  };
-
-  request.onerror = function (event) {
-    console.log("Error getting posts");
-  };
-};
-
-function cachePost(post) {
-  const transaction = localDB.transaction(["posts"], "readwrite");
-  const objectStore = transaction.objectStore("posts");
-
-  const request = objectStore.add(post);
-
-  request.onsuccess = function (event) {
-    console.log("Post saved");
-  };
-
-  request.onerror = function (event) {
-    console.log("Error saving post");
-  };
-}
-
-async function cacheImageData(imageURL) {
+/**
+ * @template T
+ * @param {IDBRequest<T>} request
+ * @returns {Promise<T>}
+ */
+function promisifyRequest(request) {
   return new Promise((resolve, reject) => {
-    const requestlocalDB = indexedDB.open("images", 1);
-    console.log("cacheImageData", imageURL);
-    requestlocalDB.onsuccess = function (event) {
-      localDB = event.target.result;
-      console.log("cacheImageData", imageURL);
-
-      const transaction = localDB.transaction("images", "readonly");
-      const objectStore = transaction.objectStore("images");
-      const request = objectStore.get(imageURL); // use get() to retrieve a specific image
-
-      request.onsuccess = function (event) {
-        const image = event.target.result;
-        console.log("Retrieved image:", image);
-        resolve(image); // resolve the Promise with the retrieved image
-      };
-
-      request.onerror = function (event) {
-        console.log("Error getting image");
-        reject(event); // reject the Promise with the error event
-      };
-    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
-function cacheImage(imageUrl) {
-  // Open a connection to the database
-  const request = indexedDB.open("images", 1);
-
-  request.onupgradeneeded = function (event) {
-    // Create an object store for the images
-    const localDB = event.target.result;
-    const objectStore = localDB.createObjectStore("images", { keyPath: "url" });
-  };
-
-  request.onsuccess = function (event) {
-    const localDB = event.target.result;
-
-    // Check if the image is already in the database
-    const transaction = localDB.transaction("images", "readonly");
-    const objectStore = transaction.objectStore("images");
-    const request = objectStore.get(imageUrl);
-
-    request.onsuccess = function (event) {
-      const image = event.target.result;
-
-      if (image) {
-        // If the image is already in the database, return it
-        console.log("Image retrieved from cache");
-        return image;
-      } else {
-        // If the image is not in the database, fetch it and store it
-        fetch(imageUrl)
-          .then((response) => response.blob())
-          .then((blob) => {
-            const transaction = localDB.transaction("images", "readwrite");
-            const objectStore = transaction.objectStore("images");
-            const request = objectStore.put({ url: imageUrl, blob });
-
-            request.onsuccess = function (event) {
-              console.log("Image cached");
-            };
-
-            request.onerror = function (event) {
-              console.log("Error caching image");
-            };
-          });
-      }
-    };
-
-    request.onerror = function (event) {
-      console.log("Error retrieving image from cache");
-    };
-  };
-
-  request.onerror = function (event) {
-    console.log("Error opening database");
-  };
+/**
+ * @param {string} name
+ * @param {number} version
+ * @param {object} options
+ * @param {(event: IDBVersionChangeEvent, result: IDBDatabase) => void} options.onUpgradeNeeded
+ * @returns {Promise<IDBDatabase>}
+ */
+function initIndexedDB(name, version, { onUpgradeNeeded = () => {} }) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(name, version);
+    request.onupgradeneeded = (event) => onUpgradeNeeded(event, request.result);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
 }
 
-function uncachePost(id, imageURL) {
+async function init(version = 1) {
+  const postsDBRequest = initIndexedDB("main", version, {
+    onUpgradeNeeded(event, result) {
+      result.createObjectStore("posts", { keyPath: "key" });
+      result.createObjectStore("images", { keyPath: "url" });
+    },
+  });
+
+  const localDB = await postsDBRequest;
+
+  return { localDB };
+}
+
+const store = init();
+store.then(() => loadAllSavedPosts());
+
+const [postsCacheSignal, setCacheData] = createSignal([]);
+export { postsCacheSignal };
+
+createEffect(() => {
+  console.log("cacheData cambio a", postsCacheSignal());
+});
+
+async function loadAllSavedPosts() {
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction("posts", "readonly");
+  const objectStore = transaction.objectStore("posts");
+  const posts = await promisifyRequest(objectStore.getAll());
+  setCacheData(posts);
+}
+
+export async function addPostToCache(post) {
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction(["posts"], "readwrite");
+  const objectStore = transaction.objectStore("posts");
+
+  await promisifyRequest(objectStore.add(post));
+  await addImageToCache(post.resourceURL);
+  await loadAllSavedPosts();
+}
+
+async function addImageToCache(imageUrl) {
+  // Open a connection to the database
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction("images", "readonly");
+  const objectStore = transaction.objectStore("images");
+
+  const image = await promisifyRequest(objectStore.get(imageUrl));
+
+  if (image) {
+    console.log("Image already from cache");
+  } else {
+    // If the image is not in the database, fetch it and store it
+    const repsonse = await fetch(imageUrl);
+    const blob = await repsonse.blob();
+
+    const transaction = localDB.transaction("images", "readwrite");
+    const objectStore = transaction.objectStore("images");
+
+    await promisifyRequest(objectStore.put({ url: imageUrl, blob }));
+  }
+}
+
+/** @deprecated */
+export async function getCacheImageData(imageURL) {
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction("images", "readonly");
+  const objectStore = transaction.objectStore("images");
+
+  return promisifyRequest(objectStore.get(imageURL));
+}
+
+export function removePostToCache(id, imageURL) {
   deleteCache("images", imageURL);
   deleteCache("posts", id);
+  loadAllSavedPosts();
 }
 
-function deleteCache(type, id) {
-  // Open a connection to the database
-  const requestlocalDB = indexedDB.open(type, 1);
-  requestlocalDB.onsuccess = function (event) {
-    const localDB = event.target.result;
+async function deleteCache(type, id) {
+  const { localDB } = await store;
 
-    const transaction = localDB.transaction(type, "readwrite");
-    const objectStore = transaction.objectStore(type);
-    const request = objectStore.delete(id);
-
-    request.onsuccess = function (event) {
-      console.log("Deleted", id);
-      console.log(type, "deleted successfully");
-    };
-
-    request.onerror = function (event) {
-      console.log("Error deleting", type);
-    };
-  };
-
-  requestlocalDB.onerror = function (event) {
-    console.log("Error opening database");
-  };
+  const transaction = localDB.transaction(type, "readwrite");
+  const objectStore = transaction.objectStore(type);
+  await promisifyRequest(objectStore.delete(id));
 }
-
-export { cachePost, cacheImage, cacheData, cacheImageData, uncachePost };

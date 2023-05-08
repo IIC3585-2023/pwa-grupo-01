@@ -5,8 +5,7 @@ import { user, logOut, signIn } from "./js/firebase/auth.js";
 import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
 import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
-import { cacheData, cacheImageData, cacheImage, cachePost, uncachePost } from "./localDB.js";
-
+import { addPostToCache, postsCacheSignal, removePostToCache, getCacheImageData } from "./localDB.js";
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(user()));
@@ -119,8 +118,8 @@ function Home(parent) {
           }
 
           saveButton.addEventListener("click", () => {
-            cachePost(post);
-            cacheImage(post.resourceURL);
+            console.log(post);
+            addPostToCache(post);
           });
         }
 
@@ -141,29 +140,33 @@ function Likes(parent) {
 function Saved(parent) {
   appendNode(parent, "div", (saved) => {
     saved.innerHTML = "Saved";
-  });
-  console.log("Saved");
 
-  const posts = cacheData();
-  console.log(posts);
-  posts.map((post) => {
-    appendNode(parent, "div", (postDiv) => {
-      appendNode(postDiv, "div", (divv) => {
-        divv.innerHTML = post.description;
-      });
-      cacheImageData(post.resourceURL).then((image) => {
-        appendNode(postDiv, "div", function (imgDiv) {
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(image.blob);
-          imgDiv.appendChild(img);
+    createEffect(() => {
+      saved.innerHTML = "";
+
+      const posts = postsCacheSignal();
+      console.log(posts);
+      for (const post of posts) {
+        appendNode(saved, "div", (postDiv) => {
+          appendNode(postDiv, "div", (divv) => {
+            divv.innerHTML = post.description;
+          });
+          getCacheImageData(post.resourceURL).then((image) => {
+            console.log({ image });
+            appendNode(postDiv, "div", function (imgDiv) {
+              const img = document.createElement("img");
+              img.src = URL.createObjectURL(image.blob);
+              imgDiv.appendChild(img);
+            });
+          });
+          appendNode(postDiv, "button", (divv) => {
+            divv.innerHTML = "Borrar";
+            divv.addEventListener("click", () => {
+              removePostToCache(post.id, post.resourceURL);
+            });
+          });
         });
-      });
-      appendNode(postDiv, "button", (divv) => {
-        divv.innerHTML = "Borrar";
-        divv.addEventListener("click", () => {
-          uncachePost(post.id, post.resourceURL);
-        });
-      });
+      }
     });
   });
 }
