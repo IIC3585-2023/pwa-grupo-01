@@ -90,7 +90,7 @@ export function getElById(id) {
 }
 
 /**
- * @param {HTMLElement} el
+ * @param {Element} el
  * @param {string} selector
  * @returns {Element}
  **/

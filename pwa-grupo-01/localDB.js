@@ -71,6 +71,10 @@ export async function addPostToCache(post) {
   await loadAllSavedPosts();
 }
 
+export function isPostSavedInCache(id) {
+  return postsCacheSignal().some((post) => post.key === id);
+}
+
 async function addImageToCache(imageUrl) {
   // Open a connection to the database
   const { localDB } = await store;
@@ -104,9 +108,10 @@ export async function getCacheImageData(imageURL) {
   return promisifyRequest(objectStore.get(imageURL));
 }
 
-export function removePostToCache(id, imageURL) {
-  deleteCache("images", imageURL);
-  deleteCache("posts", id);
+export function removePostFromCache(post) {
+  console.log("removing post from cache", post);
+  deleteCache("images", post.resourceURL);
+  deleteCache("posts", post.key);
   loadAllSavedPosts();
 }
 

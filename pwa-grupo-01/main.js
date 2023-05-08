@@ -1,11 +1,12 @@
 "use strict";
 
-import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
+import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
 import { user, logOut, signIn } from "./js/firebase/auth.js";
-import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
-import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
+import { writePostData, postsData } from "./js/firebase/db.js";
+import { getLinkGitHubUser, getSWVersion, versionSignal } from "./js/utils.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
-import { addPostToCache, postsCacheSignal, removePostToCache, getCacheImageData } from "./localDB.js";
+import { postsCacheSignal } from "./localDB.js";
+import { renderPost } from "./js/render.js";
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(user()));
@@ -32,7 +33,6 @@ const serviceWorkerUrl = "/pwa-grupo-01/sw.js";
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
-const postTemplate = /** @type {HTMLTemplateElement} */ (getElById("post-template"));
 /** @type {PageComponent} */
 function Home(parent) {
   appendNode(parent, "ul", (home) => {
@@ -40,90 +40,8 @@ function Home(parent) {
 
     createEffectWithUser((user) => {
       home.innerHTML = "";
-      const posts = postsData();
-
-      for (const post of posts) {
-        const likes = post?.likes ? Object.keys(post.likes) : [];
-        const numLikes = likes.length;
-
-        const postElement = /** @type {HTMLLIElement} */ (postTemplate.content.cloneNode(true));
-
-        const ownerAvatar = querySelect(postElement, ".post-owner-avatar");
-        ownerAvatar.src = post?.authorImg;
-        // fetch(`https://api.github.com/users/${post.authorID}`).then((response) => {
-        //   if (response.ok) {
-        //     response.json().then((data) => {
-        //       ownerAvatar.src = data?.avatar_url;
-        //     })
-        //   }
-        // });
-
-        const ownerName = querySelect(postElement, ".post-owner-name");
-        ownerName.innerHTML = getLinkGitHubUser(post.authorID);
-
-        const createdAt = /** @type {HTMLTimeElement} */ (querySelect(postElement, ".post-created-at"));
-        createdAt.innerHTML = getTimeAgo(post.key);
-        createdAt.dateTime = new Date(+post.key).toISOString();
-
-        const postFig = /** @type {HTMLElement} */ (querySelect(postElement, "figure"));
-        const captionId = `caption-${post.key}`;
-        postFig.setAttribute("aria-labelledby", captionId);
-
-        const img = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-img"));
-        img.src = post.resourceURL;
-
-        const caption = querySelect(postElement, ".post-caption");
-        caption.innerHTML = post.description;
-        caption.id = captionId;
-
-        const likeCount = querySelect(postElement, ".post-like-count");
-        const formattedLikes = new Intl.NumberFormat("es-CL", { compactDisplay: "short" }).format(numLikes);
-        likeCount.innerHTML = `${formattedLikes} like${numLikes === 1 ? "" : "s"}`;
-
-        const saveButton = querySelect(postElement, ".post-save");
-
-        const deleteButton = querySelect(postElement, ".post-delete");
-
-        const likeButton = querySelect(postElement, ".post-like");
-
-        if (user) {
-          const [outline, fill] = likeButton.querySelectorAll("path");
-          if (likes.includes(user.reloadUserInfo.screenName)) {
-            likeButton.classList.add("text-red-500");
-            fill.classList.add("text-red-500");
-            outline.classList.add("text-red-500");
-            img.addEventListener("dblclick", () => {
-              dislikePost(post.key, user.reloadUserInfo.screenName);
-            });
-            likeButton.addEventListener("click", () => {
-              dislikePost(post.key, user.reloadUserInfo.screenName);
-            });
-          } else {
-            fill.classList.add("text-white");
-            outline.classList.add("text-transparent");
-            img.addEventListener("dblclick", () => {
-              likePost(post.key, user.reloadUserInfo.screenName);
-            });
-            likeButton.addEventListener("click", () => {
-              likePost(post.key, user.reloadUserInfo.screenName);
-            });
-          }
-
-          if (user.reloadUserInfo.screenName === post.authorID) {
-            deleteButton.addEventListener("click", () => {
-              confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
-            });
-          } else {
-            deleteButton.remove();
-          }
-
-          saveButton.addEventListener("click", () => {
-            console.log(post);
-            addPostToCache(post);
-          });
-        }
-
-        home.appendChild(postElement);
+      for (const post of postsData()) {
+        home.appendChild(renderPost(post, user));
       }
     });
   });
@@ -140,32 +58,10 @@ function Likes(parent) {
 function Saved(parent) {
   appendNode(parent, "div", (saved) => {
     saved.innerHTML = "Saved";
-
-    createEffect(() => {
+    createEffectWithUser((user) => {
       saved.innerHTML = "";
-
-      const posts = postsCacheSignal();
-      console.log(posts);
-      for (const post of posts) {
-        appendNode(saved, "div", (postDiv) => {
-          appendNode(postDiv, "div", (divv) => {
-            divv.innerHTML = post.description;
-          });
-          getCacheImageData(post.resourceURL).then((image) => {
-            console.log({ image });
-            appendNode(postDiv, "div", function (imgDiv) {
-              const img = document.createElement("img");
-              img.src = URL.createObjectURL(image.blob);
-              imgDiv.appendChild(img);
-            });
-          });
-          appendNode(postDiv, "button", (divv) => {
-            divv.innerHTML = "Borrar";
-            divv.addEventListener("click", () => {
-              removePostToCache(post.id, post.resourceURL);
-            });
-          });
-        });
+      for (const post of postsCacheSignal()) {
+        saved.appendChild(renderPost(post, user, { isInSaved: true }));
       }
     });
   });
