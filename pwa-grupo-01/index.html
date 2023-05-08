@@ -19,32 +19,57 @@
         </button>
       </nav>
       <!-- Diálogo para crear un post -->
-      <dialog id="upload-post-dialog" class="flex-col backdrop:bg-stone-950 backdrop:bg-opacity-75 open:flex">
-        <h1 class="mb-8 text-center text-2xl">Crea un post</h1>
-        <div id="upload-img-input-container" class="relative mx-auto h-40 w-40 bg-stone-300">
-          <label id="upload-img-dnd" for="upload-img-input" class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center text-stone-800">
+      <dialog id="upload-post-dialog" class="flex-col gap-4 rounded-lg bg-stone-900 px-6 py-8 backdrop:bg-stone-950 backdrop:bg-opacity-75 open:flex">
+        <div class="flex gap-8">
+          <h1 class="text-center text-2xl font-bold text-stone-100">Nueva publicación</h1>
+          <button id="cancel-upload-btn" class="text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"
+              />
+            </svg>
+            <span class="sr-only">Cancelar</span>
+          </button>
+        </div>
+        <div id="upload-img-input-container" class="relative mx-auto aspect-square w-full rounded border border-stone-600 bg-stone-800">
+          <input id="upload-img-input" type="file" accept="image/*" class="peer sr-only" required />
+          <label
+            id="upload-img-dnd"
+            for="upload-img-input"
+            class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center rounded text-stone-300 peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-purple-700"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
               <path fill="currentColor" d="M9 16h6v-6h4l-7-7l-7 7h4zm-4 2h14v2H5z" />
             </svg>
             Subir una imagen
           </label>
           <div id="upload-img-preview-container" class="absolute inset-0" style="display: none">
-            <img id="upload-img-preview" class="h-full w-full object-cover" />
-            <button id="upload-img-remove" type="button" class="absolute right-2 top-2 text-red-500">
+            <img id="upload-img-preview" class="h-full w-full object-contain" />
+            <button id="upload-img-remove" type="button" class="absolute right-2 top-2 text-white shadow-black drop-shadow-xl">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
-                  d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12L17 15.59z"
+                  d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"
                 />
               </svg>
               <span class="sr-only">Eliminar imagen</span>
             </button>
           </div>
-          <input id="upload-img-input" type="file" accept="image/*" class="sr-only" />
         </div>
-        <input id="upload-caption" type="text" placeholder="Escribe una descripción..." class="mb-8 w-full border border-stone-800 px-4 py-2" />
-        <button id="cancel-upload-btn" class="bg-red-200 px-4 py-2 text-red-800">Cancelar</button>
-        <button id="upload-submit" class="bg-green-200 px-4 py-2 text-green-800">Subir</button>
+        <input
+          id="upload-caption"
+          type="text"
+          required
+          placeholder="Escribe una descripción..."
+          class="w-full rounded border border-stone-600 bg-stone-800 px-4 py-2 text-stone-100 placeholder:text-stone-300 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-purple-700"
+        />
+        <button
+          id="upload-submit"
+          class="rounded bg-purple-800 px-4 py-2 text-purple-100 focus-visible:bg-purple-900 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-purple-700"
+        >
+          Subir
+        </button>
       </dialog>
       <!-- Templates -->
       <template id="post-template">
@@ -61,8 +86,8 @@
             </div>
             <h2 class="post-caption py-2 text-2xl font-bold"></h2>
           </header>
-          <figure class="post-figure">
-            <img class="post-img max-h-96 min-h-[18rem] w-full bg-black object-contain" />
+          <figure class="post-figure flex max-h-96 min-h-[18rem] w-full items-center justify-center bg-black">
+            <img class="post-img w-ful aspect-auto h-full" />
           </figure>
           <footer class="flex items-start justify-between p-4 pb-0">
             <div class="flex items-center gap-2">
@@ -164,7 +189,7 @@
           </div>
           <span class="sr-only">Perfil</span>
         </button>
-        <button id="create-btn" class="absolute -top-20 right-4 z-50 ml-3 hidden h-16 w-16 items-center justify-center rounded-full bg-purple-700">
+        <button disabled id="create-btn" class="absolute -top-20 right-4 z-50 ml-3 flex h-16 w-16 items-center justify-center rounded-full bg-purple-700">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
             <path fill="currentColor" d="M18 12.998h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5v-5a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2z" />
           </svg>
