@@ -1,10 +1,12 @@
 "use strict";
 
-import { animateDomUpdate, createEffect, createSignal, appendNode, getElById, querySelect } from "./js/ui.js";
+import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
+import { writePostData, postsData } from "./js/firebase/db.js";
+import { getLinkGitHubUser, getSWVersion, versionSignal, waitForImageLoad } from "./js/utils.js";
 import { userSignal, logOut, signIn } from "./js/firebase/auth.js";
-import { deletePostData, likePost, writePostData, postsData, dislikePost } from "./js/firebase/db.js";
-import { getTimeAgo, getLinkGitHubUser, getSWVersion, versionSignal, waitForImageLoad } from "./js/utils.js";
 import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
+import { postsCacheSignal } from "./localDB.js";
+import { renderPost } from "./js/render.js";
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(userSignal()));
@@ -31,7 +33,6 @@ const serviceWorkerUrl = `${basePath.replace(/\/+$/, "")}/sw.js`;
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
-const postTemplate = /** @type {HTMLTemplateElement} */ (getElById("post-template"));
 /** @type {PageComponent} */
 function Home(parent) {
   appendNode(parent, "ul", (home) => {
@@ -39,86 +40,8 @@ function Home(parent) {
 
     createEffectWithUser((user) => {
       home.innerHTML = "";
-      const posts = postsData();
-
-      for (const post of posts) {
-        const likes = post?.likes ? Object.keys(post.likes) : [];
-        const numLikes = likes.length;
-
-        const postElement = /** @type {HTMLLIElement} */ (postTemplate.content.cloneNode(true));
-
-        const ownerAvatar = querySelect(postElement, ".post-owner-avatar");
-        ownerAvatar.src = post?.authorImg;
-        // fetch(`https://api.github.com/users/${post.authorID}`).then((response) => {
-        //   if (response.ok) {
-        //     response.json().then((data) => {
-        //       ownerAvatar.src = data?.avatar_url;
-        //     })
-        //   }
-        // });
-
-        const ownerName = querySelect(postElement, ".post-owner-name");
-        ownerName.innerHTML = getLinkGitHubUser(post.authorID);
-
-        const createdAt = /** @type {HTMLTimeElement} */ (querySelect(postElement, ".post-created-at"));
-        createdAt.innerHTML = getTimeAgo(post.key);
-        createdAt.dateTime = new Date(+post.key).toISOString();
-
-        const postFig = /** @type {HTMLElement} */ (querySelect(postElement, "figure"));
-        const captionId = `caption-${post.key}`;
-        postFig.setAttribute("aria-labelledby", captionId);
-
-        const img = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-img"));
-        img.src = post.resourceURL;
-        img.id = `img-${post.key}`;
-
-        const caption = querySelect(postElement, ".post-caption");
-        caption.innerHTML = post.description;
-        caption.id = captionId;
-
-        const likeCount = querySelect(postElement, ".post-like-count");
-        const formattedLikes = new Intl.NumberFormat("es-CL", { compactDisplay: "short" }).format(numLikes);
-        likeCount.innerHTML = `${formattedLikes} like${numLikes === 1 ? "" : "s"}`;
-
-        const saveButton = querySelect(postElement, ".post-save");
-
-        const deleteButton = querySelect(postElement, ".post-delete");
-
-        const likeButton = querySelect(postElement, ".post-like");
-
-        if (user) {
-          const [outline, fill] = likeButton.querySelectorAll("path");
-          if (likes.includes(user.reloadUserInfo.screenName)) {
-            likeButton.classList.add("text-red-500");
-            fill.classList.add("text-red-500");
-            outline.classList.add("text-red-500");
-            img.addEventListener("dblclick", () => {
-              dislikePost(post.key, user.reloadUserInfo.screenName);
-            });
-            likeButton.addEventListener("click", () => {
-              dislikePost(post.key, user.reloadUserInfo.screenName);
-            });
-          } else {
-            fill.classList.add("text-white");
-            outline.classList.add("text-transparent");
-            img.addEventListener("dblclick", () => {
-              likePost(post.key, user.reloadUserInfo.screenName);
-            });
-            likeButton.addEventListener("click", () => {
-              likePost(post.key, user.reloadUserInfo.screenName);
-            });
-          }
-
-          if (user.reloadUserInfo.screenName === post.authorID) {
-            deleteButton.addEventListener("click", () => {
-              confirm("¿Estás seguro/a de que quieres eliminar esta publicación?") && deletePostData(post.key);
-            });
-          } else {
-            deleteButton.remove();
-          }
-        }
-
-        home.appendChild(postElement);
+      for (const post of postsData()) {
+        home.appendChild(renderPost(post, user));
       }
     });
   });
@@ -133,8 +56,15 @@ function Likes(parent) {
 
 /** @type {PageComponent} */
 function Saved(parent) {
-  appendNode(parent, "div", (saved) => {
-    saved.innerHTML = "Saved";
+  appendNode(parent, "ul", (saved) => {
+    saved.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24", "h-full");
+
+    createEffectWithUser((user) => {
+      saved.innerHTML = "";
+      for (const post of postsCacheSignal()) {
+        saved.appendChild(renderPost(post, user, { isInSaved: true }));
+      }
+    });
   });
 }
 
@@ -207,8 +137,8 @@ const pages = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
-  const pageSignal = atachMainNavegation();
-  atachCreatePost(pageSignal);
+  atachMainNavegation();
+  atachCreatePost();
   atachUserImageInNav();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {

@@ -39,6 +39,7 @@ versionBroadcastChannel.onmessage = (event) => {
   versionBroadcastChannel.close();
 };
 
+
 export async function getSWVersion() {
   if (!navigator?.serviceWorker?.controller) return;
   versionBroadcastChannel.postMessage("version");
