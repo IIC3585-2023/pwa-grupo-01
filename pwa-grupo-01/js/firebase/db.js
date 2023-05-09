@@ -23,8 +23,7 @@ export async function writePostData(authorInfo, description, img) {
   const resourceURL = await uploadResource(img);
 
   await setDB(refDB(db, "posts/" + postID), {
-    authorID: authorInfo.screenName,
-    authorImg: authorInfo.photoUrl,
+    authorUserName: authorInfo.screenName,
     description,
     resourceURL,
   });

@@ -12,10 +12,10 @@ export function renderPost(post, user, { isInSaved = false } = {}) {
   const postElement = /** @type {HTMLLIElement} */ (postTemplate.content.cloneNode(true));
 
   const ownerAvatar = /** @type {HTMLImageElement} */ (querySelect(postElement, ".post-owner-avatar"));
-  ownerAvatar.src = post?.authorImg;
+  ownerAvatar.src = `https://github.com/${post.authorUserName}.png`;
 
   const ownerName = querySelect(postElement, ".post-owner-name");
-  ownerName.innerHTML = getLinkGitHubUser(post.authorID);
+  ownerName.innerHTML = getLinkGitHubUser(post.authorUserName);
 
   const createdAt = /** @type {HTMLTimeElement} */ (querySelect(postElement, ".post-created-at"));
   createdAt.innerHTML = getTimeAgo(post.key);
@@ -64,7 +64,7 @@ export function renderPost(post, user, { isInSaved = false } = {}) {
       });
     }
 
-    if (user.reloadUserInfo.screenName === post.authorID) {
+    if (user.reloadUserInfo.screenName === post.authorUserName) {
       deleteButton.addEventListener("click", () => {
         confirm("Are you sure you want to delete this post?") && deletePostData(post.key);
       });
