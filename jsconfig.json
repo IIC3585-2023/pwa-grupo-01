@@ -1,5 +1,6 @@
 {
   "include": ["./pwa-grupo-01/**/*", "types.d.ts"],
+  "exclude": ["./functions/**/*"],
   "compilerOptions": {
     "strict": true,
     "module": "ESNext",

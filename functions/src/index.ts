@@ -1,9 +1,9 @@
 import { onValueWritten } from "firebase-functions/v2/database";
-import { initializeApp, database, messaging } from "firebase-admin";
+import * as admin from "firebase-admin";
 
-const app = initializeApp();
-const db = database(app);
-const msg = messaging(app);
+const app = admin.initializeApp();
+const db = admin.database(app);
+const msg = admin.messaging(app);
 
 export const onLike = onValueWritten("posts/{postID}/likes/{userID}", async (event) => {
   const { postID, userID } = event.params;
