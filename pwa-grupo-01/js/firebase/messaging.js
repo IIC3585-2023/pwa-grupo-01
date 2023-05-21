@@ -1,6 +1,9 @@
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging.js";
-import { createSignal } from "../ui.js";
+import { ref as refDB, set as setDB } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+import { createSignal, createEffect } from "../ui.js";
 import { app, firebaseConfig } from "./app.js";
+import { userSignal } from "./auth.js";
+import { db } from "./db.js";
 
 export const messaging = getMessaging(app);
 
@@ -20,4 +23,16 @@ export async function initializeNotificationService(serviceWorkerRegistration) {
     console.log("Message received. ", payload);
   });
 }
+
+createEffect(async () => {
+  const user = userSignal();
+  const token = tokenSignal();
+
+  if (!user || !token) return;
+
+  const userId = user.reloadUserInfo.screenName;
+
+  await setDB(refDB(db, `users/${userId}/tokens/${token}`), true);
+});
+
 export { tokenSignal };
