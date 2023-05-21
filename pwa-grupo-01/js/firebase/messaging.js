@@ -4,6 +4,7 @@ import { createSignal, createEffect } from "../ui.js";
 import { app, firebaseConfig } from "./app.js";
 import { userSignal } from "./auth.js";
 import { db } from "./db.js";
+import { pages, setPageIndex } from "../../main.js";
 
 export const messaging = getMessaging(app);
 
@@ -20,7 +21,15 @@ export async function initializeNotificationService(serviceWorkerRegistration) {
   const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey, serviceWorkerRegistration });
   setToken(token);
   onMessage(messaging, (payload) => {
-    console.log("Message received. ", payload);
+    console.log("Message received in foreground:", payload);
+    if (!payload.notification) return;
+    const title = payload.notification.title || "(sin título)";
+    const notification = new Notification(title, { ...payload.notification, icon: "/pwa-grupo-01/icons/PWgAg-512.png" });
+
+    notification.addEventListener("click", () => {
+      setPageIndex(1);
+      notification.close();
+    });
   });
 }
 

@@ -129,17 +129,10 @@ function User(parent) {
   });
 }
 
-const pages = [
-  { btnId: "home-btn", component: Home },
-  { btnId: "likes-btn", component: Likes },
-  { btnId: "saved-btn", component: Saved },
-  { btnId: "user-btn", component: User },
-];
-
 window.addEventListener("DOMContentLoaded", () => {
-  atachMainNavegation();
-  atachCreatePost();
-  atachUserImageInNav();
+  attachMainNavigation();
+  attachCreatePost();
+  attachUserImageInNav();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {
@@ -147,69 +140,75 @@ window.addEventListener("DOMContentLoaded", () => {
         type: "module",
       });
       initializeNotificationService(registration).then(() => requestNotificationPermission());
-      getSWVersion(registration);
+      getSWVersion();
     });
   }
 });
 
-function atachMainNavegation() {
+export const pages = [
+  { btnId: "home-btn", component: Home },
+  { btnId: "likes-btn", component: Likes },
+  { btnId: "saved-btn", component: Saved },
+  { btnId: "user-btn", component: User },
+];
+
+export const [pageIndexSignal, setPageIndex] = createSignal(0);
+
+function attachMainNavigation() {
   const contentEl = getElById("content");
   const logoBtn = getElById("logo-btn");
   const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
 
   const pagesWithBtns = pages.map((page) => ({ ...page, btn: getElById(page.btnId) }));
+  setPageIndex(0);
 
-  const [page, setPage] = createSignal(pagesWithBtns[0]);
-
-  logoBtn.addEventListener("click", () => setPage(pagesWithBtns[0]));
+  logoBtn.addEventListener("click", () => setPageIndex(0));
   pagesWithBtns[0].btn.classList.add("active");
 
-  for (const page of pagesWithBtns) {
-    page.btn.addEventListener("click", () => setPage(page));
+  for (let i = 0; i < pagesWithBtns.length; i++) {
+    const page = pagesWithBtns[i];
+    page.btn.addEventListener("click", () => setPageIndex(i));
   }
 
-  let oldPage = page();
+  let oldPageIndex = 0;
 
   createEffectWithUser((user) => {
-    createBtn.disabled = !user || page().component !== Home;
+    const newPageIndex = pageIndexSignal();
 
-    if (oldPage === page()) {
-      // En pruner render
-      oldPage = page();
+    if (oldPageIndex === newPageIndex) {
+      // No hay que cambiar nada
       contentEl.innerHTML = "";
-      oldPage.component(contentEl);
+      pagesWithBtns[oldPageIndex].component(contentEl);
       return;
     }
 
-    const pageElement = page();
-    oldPage.btn.classList.remove("active");
+    pagesWithBtns[oldPageIndex].btn.classList.remove("active");
 
-    const slideToTheRight = pagesWithBtns.indexOf(oldPage) > pagesWithBtns.indexOf(pageElement);
+    const slideToTheRight = oldPageIndex > newPageIndex;
 
     animateDomUpdate(
       () => {
         contentEl.classList.toggle("to-right", slideToTheRight);
         contentEl.classList.toggle("to-left", !slideToTheRight);
-        pageElement.btn.classList.add("active");
 
-        const { component } = page();
-        const isDisabled = component !== Home || !user;
-        createBtn.disabled = isDisabled;
+        createBtn.disabled = !user || newPageIndex !== 0;
 
         contentEl.innerHTML = "";
-        pageElement.component(contentEl);
+        const page = pagesWithBtns[newPageIndex];
+        page.btn.classList.add("active");
+        page.component(contentEl);
       },
       () => {
         contentEl.classList.remove("to-right", "to-left");
-        oldPage = pageElement;
+        oldPageIndex = newPageIndex;
       }
     );
   });
 
-  return page;
+  return pageIndexSignal;
 }
 
-function atachUserImageInNav() {
+function attachUserImageInNav() {
   const img = /** @type {HTMLImageElement} */ (getElById("bar-user-img"));
   createEffectWithUser((user) => {
     document.documentElement.dataset["loggedin"] = String(!!user);
@@ -217,7 +216,7 @@ function atachUserImageInNav() {
   });
 }
 
-function atachCreatePost() {
+function attachCreatePost() {
   const createBtn = /** @type {HTMLButtonElement} */ (getElById("create-btn"));
   const createDialog = /** @type {HTMLDialogElement} */ (getElById("upload-post-dialog"));
   const uploadImgInput = /** @type {HTMLInputElement} */ (getElById("upload-img-input"));

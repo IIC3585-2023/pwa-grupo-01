@@ -3,7 +3,7 @@
 import { getMessaging, onBackgroundMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js";
 import { app } from "./js/firebase/app.js";
 
-const version = "0.2.0";
+const version = "0.2.1";
 
 const staticFiles = [
   "/pwa-grupo-01/",
@@ -23,9 +23,10 @@ export const messaging = getMessaging(app);
 console.log("Service Worker initializing...");
 
 onBackgroundMessage(messaging, (payload) => {
-  console.log("Message received. ", payload);
-  const notificationTitle = "Probando PWA";
-  self.registration.showNotification(notificationTitle);
+  console.log("Message received in background:", payload);
+  if (!payload.notification) return;
+  const title = payload.notification.title || "(sin título)";
+  self.registration.showNotification(title, payload.notification);
 });
 
 addEventListener("install", (event) => {
