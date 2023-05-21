@@ -24,7 +24,8 @@ export const onLike = onValueWritten("posts/{postID}/likes/{userID}", async (eve
     console.error(`No tokens found for user ${authorUserName}`);
     return;
   }
-  const tokens: string[] = Object.values(tokensSnap.val());
+  const tokens: string[] = Object.keys(tokensSnap.val());
+  console.info(`Sending notification to ${authorUserName} with tokens ${tokens.join(", ")}`);
 
   // Se envía la notificación
   await msg.sendEachForMulticast({
