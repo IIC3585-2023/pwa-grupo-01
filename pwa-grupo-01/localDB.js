@@ -22,21 +22,32 @@ function promisifyRequest(request) {
 function initIndexedDB(name, version, { onUpgradeNeeded = () => {} }) {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(name, version);
+    console.log("request", request);
     request.onupgradeneeded = (event) => onUpgradeNeeded(event, request.result);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error("Database blocked"));
+    setTimeout(() => reject(new Error("Timeout")), 5000);
   });
 }
 
+let isBeenInitialized = false;
 async function init(version = 1) {
+  console.log("initIndexedDB");
+  if (isBeenInitialized) return;
+  isBeenInitialized = true;
+
   const postsDBRequest = initIndexedDB("main", version, {
     onUpgradeNeeded(event, result) {
+      console.log("onUpgradeNeeded");
       result.createObjectStore("posts", { keyPath: "key" });
       result.createObjectStore("images", { keyPath: "url" });
+      result.createObjectStore("notifications", { keyPath: "id", autoIncrement: true });
     },
   });
 
   const localDB = await postsDBRequest;
+  console.log("localDB", localDB);
 
   return { localDB };
 }
@@ -122,3 +133,26 @@ async function deleteCache(type, id) {
   const objectStore = transaction.objectStore(type);
   await promisifyRequest(objectStore.delete(id));
 }
+
+export async function addNotificationToCache(notification) {
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction("notifications", "readwrite");
+  const objectStore = transaction.objectStore("notifications");
+
+  promisifyRequest(objectStore.add(notification));
+}
+
+const [notificationSignal, setNotificationSignal] = createSignal(/** @type {any[]} */ ([]));
+export async function getNotificationsFromCache() {
+  const { localDB } = await store;
+
+  const transaction = localDB.transaction("notifications", "readonly");
+  const objectStore = transaction.objectStore("notifications");
+
+  const notifications = await promisifyRequest(objectStore.getAll());
+  setNotificationSignal(notifications);
+}
+getNotificationsFromCache();
+
+export { notificationSignal };

@@ -5,7 +5,7 @@ import { writePostData, postsData } from "./js/firebase/db.js";
 import { getLinkGitHubUser, versionSignal, waitForImageLoad } from "./js/utils.js";
 import { userSignal, logOut, signIn } from "./js/firebase/auth.js";
 import { allowedNotificationSignal, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
-import { postsCacheSignal } from "./localDB.js";
+import { notificationSignal, postsCacheSignal } from "./localDB.js";
 import { renderPost } from "./js/render.js";
 import { reloadSW, registerSW, deleteCache } from "./js/registration.js";
 
@@ -41,8 +41,19 @@ function Home(parent) {
 
 /** @type {PageComponent} */
 function Likes(parent) {
-  appendNode(parent, "div", (likes) => {
-    likes.innerHTML = "Likes";
+  appendNode(parent, "ul", (likes) => {
+    likes.classList.add("flex", "flex-col", "items-center", "bg-black", "gap-4", "pb-24", "h-full");
+
+    createEffect(() => {
+      likes.innerHTML = "";
+      const notifications = notificationSignal();
+
+      for (const notification of notifications) {
+        appendNode(likes, "li", (li) => {
+          li.textContent = notification.title;
+        });
+      }
+    });
   });
 }
 

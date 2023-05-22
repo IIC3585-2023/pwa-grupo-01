@@ -6,6 +6,7 @@ import { userSignal } from "./auth.js";
 import { db } from "./db.js";
 import { setPageIndex } from "../../main.js";
 import { registrationSignal } from "../registration.js";
+import { addNotificationToCache } from "../../localDB.js";
 
 export const messaging = getMessaging(app);
 
@@ -33,13 +34,16 @@ createEffect(() => {
 });
 
 const [tokenSignal, setToken] = createSignal("");
+
 /** @param {ServiceWorkerRegistration} serviceWorkerRegistration */
 export async function initializeNotificationService(serviceWorkerRegistration) {
   const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey, serviceWorkerRegistration });
   setToken(token);
+
   onMessage(messaging, (payload) => {
     console.log("Message received in foreground:", payload);
     if (!payload.notification) return;
+    addNotificationToCache(payload);
     const title = payload.notification.title || "(sin título)";
     const notification = new Notification(title, { ...payload.notification, icon: "/pwa-grupo-01/icons/PWgAg-512.png" });
 

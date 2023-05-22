@@ -2,6 +2,7 @@
 
 import { getMessaging, onBackgroundMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js";
 import { app } from "./js/firebase/app.js";
+// import { addNotificationToCache } from "./localDB.js";
 
 const version = "0.2.3";
 
@@ -28,6 +29,7 @@ onBackgroundMessage(messaging, (payload) => {
   console.log("Message received in background:", payload);
   if (!payload.notification) return;
   const title = payload.notification.title || "(sin título)";
+  // addNotificationToCache(payload.notification);
   self.registration.showNotification(title, payload.notification);
 });
 
