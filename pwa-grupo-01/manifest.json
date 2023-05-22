@@ -13,7 +13,7 @@
       "src": "/pwa-grupo-01/icons/PWgAg.svg",
       "type": "image/svg+xml",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "/pwa-grupo-01/icons/PWgAg-192.png",
@@ -31,6 +31,7 @@
       "name": "Crear post",
       "short_name": "Crear post",
       "url": "/pwa-grupo-01/?create",
+      "description": "Crear post",
       "icons": [
         {
           "src": "/pwa-grupo-01/icons/PWgAg-192.png",
