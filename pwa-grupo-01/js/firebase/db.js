@@ -5,12 +5,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-storage.js";
-import {
-  getDatabase,
-  ref as refDB,
-  set as setDB,
-  onValue,
-} from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
+import { getDatabase, ref as refDB, set as setDB, onValue } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
 import { createSignal } from "../ui.js";
 
 import { app } from "./app.js";

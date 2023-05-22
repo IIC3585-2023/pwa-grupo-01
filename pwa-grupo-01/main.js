@@ -50,9 +50,39 @@ function Home(parent) {
 /** @type {PageComponent} */
 function Likes(parent) {
   appendNode(parent, "div", (likes) => {
-    likes.innerHTML = "Likes";
+    createEffectWithUser((user) => {
+      likes.innerHTML = "Likes en tus posts";
+      if (user == null) {
+        likes.innerHTML += "<br /> Inicia sesión para ver tus likes";
+        // const likeBtn = /** @type {HTMLDivElement} */ (getElById("likes-btn"));
+        // likeBtn.style.display = "none";
+        // return
+      }
+      likes.classList.add("divide-y");
+      for (const post of postsData()) {
+        if (user?.reloadUserInfo.screenName == post.authorUserName) {
+          const allLikes = post?.likes ? Object.keys(post.likes) : [];
+          const numLikes = allLikes.length;
+          appendNode(likes, "div", (like) => {
+            like.classList.add("flex", "py-2", "items-center", "gap-4");
+            appendNode(like, "img", (img) => {
+              img.src = post?.resourceURL;
+              img.classList.add("w-20", "h-20", "object-cover");
+            });
+            appendNode(like, "p", (text) => {
+              text.innerHTML = `'${post.description}' tiene ${numLikes} like${numLikes === 1 ? "" : "s"}`;
+            });
+          });
+        }
+      }
+    });
   });
 }
+
+// createEffectWithUser((user) => {
+//   const likeBtn = /** @type {HTMLDivElement} */ (getElById("likes-btn"));
+//   likeBtn.style.display = user ? "" : "none";
+// });
 
 /** @type {PageComponent} */
 function Saved(parent) {
