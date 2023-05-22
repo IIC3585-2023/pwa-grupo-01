@@ -133,6 +133,18 @@ window.addEventListener("DOMContentLoaded", () => {
   attachMainNavigation();
   attachCreatePost();
   attachUserImageInNav();
+
+  // Open create modal if url has ?create
+  console.log(window.location.search);
+
+  if (window.location.search === "?create") {
+    setTimeout(() => {
+      console.log("open create modal");
+      setPageIndex(0);
+      getElById("create-btn").dispatchEvent(new Event("click"));
+    }, 0);
+  }
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
       const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {

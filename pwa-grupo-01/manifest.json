@@ -25,5 +25,19 @@
       "type": "image/png",
       "sizes": "512x512"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Crear post",
+      "short_name": "Crear post",
+      "url": "/pwa-grupo-01/?create",
+      "icons": [
+        {
+          "src": "/pwa-grupo-01/icons/PWgAg-192.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
