@@ -3,19 +3,24 @@
 import { getMessaging, onBackgroundMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js";
 import { app } from "./js/firebase/app.js";
 
-const version = "0.2.5";
+const version = "0.3.0";
 
 const staticFiles = [
   "/pwa-grupo-01/",
-  "/pwa-grupo-01/index.html",
-  "/pwa-grupo-01/style.css",
-  "/pwa-grupo-01/main.js",
-  "/pwa-grupo-01/js/ui.js",
-  "/pwa-grupo-01/js/utils.js",
+  "/pwa-grupo-01/icons/PWgAg-192.png",
+  "/pwa-grupo-01/icons/PWgAg-512.png",
+  "/pwa-grupo-01/icons/PWgAg.svg",
   "/pwa-grupo-01/js/firebase/app.js",
   "/pwa-grupo-01/js/firebase/auth.js",
   "/pwa-grupo-01/js/firebase/db.js",
   "/pwa-grupo-01/js/firebase/messaging.js",
+  "/pwa-grupo-01/js/render.js",
+  "/pwa-grupo-01/js/ui.js",
+  "/pwa-grupo-01/js/utils.js",
+  "/pwa-grupo-01/index.html",
+  "/pwa-grupo-01/manifest.json",
+  "/pwa-grupo-01/style.css",
+  "/pwa-grupo-01/sw.js",
 ];
 
 export const messaging = getMessaging(app);
@@ -57,22 +62,6 @@ addEventListener("fetch", (event) => {
     caches.match(event.request).then((response) => {
       // If the request is in the cache, return it
       if (response) return response;
-
-      // TODO: cache de otras cosas
-
-      // Esto de abajo no se usa pq cachea todo
-      // // If the request is not in the cache, fetch it
-      // return fetch(event.request).then((response) => {
-      //   // Clone the response to add it to the cache
-      //   const clonedResponse = response.clone();
-
-      //   caches.open("my-cache").then((cache) => {
-      //     // Add the response to the cache
-      //     cache.put(event.request, clonedResponse);
-      //   });
-
-      //   return response;
-      // });
 
       return fetch(event.request);
     })
