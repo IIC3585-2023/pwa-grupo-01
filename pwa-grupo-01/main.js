@@ -2,11 +2,12 @@
 
 import { animateDomUpdate, createEffect, createSignal, appendNode, getElById } from "./js/ui.js";
 import { writePostData, postsData } from "./js/firebase/db.js";
-import { getLinkGitHubUser, getSWVersion, versionSignal, waitForImageLoad } from "./js/utils.js";
+import { getLinkGitHubUser, versionSignal, waitForImageLoad } from "./js/utils.js";
 import { userSignal, logOut, signIn } from "./js/firebase/auth.js";
-import { initializeNotificationService, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
+import { allowedNotificationSignal, requestNotificationPermission, tokenSignal } from "./js/firebase/messaging.js";
 import { postsCacheSignal } from "./localDB.js";
 import { renderPost } from "./js/render.js";
+import { reloadSW, registerSW, deleteCache } from "./js/registration.js";
 
 /** @param {(user: User | null) => void} fn */
 const createEffectWithUser = (fn) => createEffect(() => fn(userSignal()));
@@ -21,15 +22,6 @@ function getPWADisplayMode() {
   }
   return "browser";
 }
-
-// function replaceURL(path) {
-//   const currentUrl = window.location.href;
-//   const newUrl = currentUrl.replace(/\/$/, '/') + `#${path}`;
-//   window.location.href = newUrl;
-// }
-
-const basePath = new URL(window.location.href).pathname;
-const serviceWorkerUrl = `${basePath.replace(/\/+$/, "")}/sw.js`;
 
 /** @typedef {(parent: HTMLElement) => void} PageComponent */
 
@@ -115,15 +107,73 @@ function User(parent) {
     });
 
     appendNode(userpage, "div", (version) => {
+      version.classList.add("text-gray-400", "my-4");
       createEffect(() => {
         version.innerHTML = `Version: ${versionSignal()}`;
       });
     });
 
-    appendNode(userpage, "div", (swVersion) => {
-      swVersion.classList.add("text-center");
-      createEffect(() => {
-        swVersion.innerHTML = `MS token<br>${tokenSignal()}`;
+    appendNode(userpage, "div", (actions) => {
+      actions.className = "flex flex-col items-stretch gap-4";
+
+      appendNode(actions, "button", (btn) => {
+        let shouldAskForNotifications = true;
+        btn.classList.add("p-2", "rounded-md", "text-white");
+        createEffect(() => {
+          const allowedNotifications = allowedNotificationSignal();
+          btn.classList.toggle("bg-blue-500", !allowedNotifications);
+          btn.classList.toggle("bg-blue-900", allowedNotifications);
+          if (allowedNotificationSignal()) {
+            btn.textContent = "Notificaciones ok";
+            shouldAskForNotifications = false;
+            btn.disabled = true;
+          } else {
+            btn.textContent = "Activar notificaciones";
+            shouldAskForNotifications = true;
+            btn.disabled = false;
+          }
+        });
+
+        btn.addEventListener("click", () => {
+          if (!shouldAskForNotifications) return;
+          requestNotificationPermission();
+        });
+      });
+
+      appendNode(actions, "button", (clearCacheBtn) => {
+        clearCacheBtn.textContent = "Limpiar cache y recargar";
+        clearCacheBtn.classList.add("p-2", "bg-blue-500", "rounded-md", "text-white");
+        clearCacheBtn.addEventListener("click", () => deleteCache().then(() => location.reload()));
+      });
+
+      appendNode(actions, "button", (clearCacheBtn) => {
+        clearCacheBtn.textContent = "Reiniciar SW";
+        clearCacheBtn.classList.add("p-2", "bg-blue-500", "rounded-md", "text-white");
+        clearCacheBtn.addEventListener("click", reloadSW);
+      });
+
+      appendNode(actions, "button", (btn) => {
+        btn.classList.add("p-2", "rounded-md", "text-white");
+        const [copiedSignal, setCopied] = createSignal(false);
+        createEffect(() => {
+          const copied = copiedSignal();
+          const hasToken = !!tokenSignal();
+          btn.classList.toggle("bg-blue-500", !copied && hasToken);
+          btn.classList.toggle("bg-blue-900", copied || !hasToken);
+          if (copied) {
+            btn.textContent = "Copiado";
+            btn.disabled = true;
+          } else {
+            btn.textContent = hasToken ? "Copiar MS token" : "Cargando MS token";
+            btn.disabled = !hasToken;
+          }
+        });
+
+        btn.addEventListener("click", () => {
+          navigator.clipboard.writeText(tokenSignal());
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
       });
     });
   });
@@ -133,16 +183,7 @@ window.addEventListener("DOMContentLoaded", () => {
   attachMainNavigation();
   attachCreatePost();
   attachUserImageInNav();
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
-      const registration = await navigator.serviceWorker.register(serviceWorkerUrl, {
-        scope: basePath,
-        type: "module",
-      });
-      initializeNotificationService(registration).then(() => requestNotificationPermission());
-      getSWVersion();
-    });
-  }
+  if ("serviceWorker" in navigator) window.addEventListener("load", registerSW);
 });
 
 export const pages = [

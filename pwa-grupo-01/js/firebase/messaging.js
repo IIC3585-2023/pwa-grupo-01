@@ -4,16 +4,33 @@ import { createSignal, createEffect } from "../ui.js";
 import { app, firebaseConfig } from "./app.js";
 import { userSignal } from "./auth.js";
 import { db } from "./db.js";
-import { pages, setPageIndex } from "../../main.js";
+import { setPageIndex } from "../../main.js";
+import { registrationSignal } from "../registration.js";
 
 export const messaging = getMessaging(app);
+
+const [allowedNotificationSignal, setAllowedNotificationPermission] = createSignal(Notification.permission === "granted");
+navigator.permissions.query({ name: "notifications" }).then((notificationPerm) => {
+  notificationPerm.addEventListener("change", () => {
+    setAllowedNotificationPermission(Notification.permission === "granted");
+  });
+});
+export { allowedNotificationSignal };
 
 export async function requestNotificationPermission() {
   const permission = await Notification.requestPermission();
   if (permission === "granted") {
     console.log("Notification permission granted.");
   }
+  return permission === "granted";
 }
+
+createEffect(() => {
+  const registration = registrationSignal();
+  if (allowedNotificationSignal() && registration) {
+    initializeNotificationService(registration);
+  }
+});
 
 const [tokenSignal, setToken] = createSignal("");
 /** @param {ServiceWorkerRegistration} serviceWorkerRegistration */

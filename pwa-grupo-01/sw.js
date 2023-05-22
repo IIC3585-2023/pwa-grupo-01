@@ -3,19 +3,21 @@
 import { getMessaging, onBackgroundMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js";
 import { app } from "./js/firebase/app.js";
 
-const version = "0.2.1";
+const version = "0.2.3";
 
 const staticFiles = [
-  "/pwa-grupo-01/",
-  "/pwa-grupo-01/index.html",
-  "/pwa-grupo-01/style.css",
-  "/pwa-grupo-01/main.js",
-  "/pwa-grupo-01/js/ui.js",
-  "/pwa-grupo-01/js/utils.js",
+  // "/pwa-grupo-01/",
   "/pwa-grupo-01/js/firebase/app.js",
   "/pwa-grupo-01/js/firebase/auth.js",
   "/pwa-grupo-01/js/firebase/db.js",
   "/pwa-grupo-01/js/firebase/messaging.js",
+  "/pwa-grupo-01/js/registration.js",
+  "/pwa-grupo-01/js/render.js",
+  "/pwa-grupo-01/js/ui.js",
+  "/pwa-grupo-01/js/utils.js",
+  "/pwa-grupo-01/index.html",
+  "/pwa-grupo-01/style.css",
+  "/pwa-grupo-01/main.js",
 ];
 
 export const messaging = getMessaging(app);
@@ -55,7 +57,6 @@ addEventListener("fetch", (event) => {
   console.log("Service Worker fetching.");
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // If the request is in the cache, return it
       if (response) return response;
 
       // TODO: cache de otras cosas

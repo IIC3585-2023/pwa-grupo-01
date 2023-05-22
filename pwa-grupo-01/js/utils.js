@@ -33,10 +33,10 @@ export const getLinkGitHubUser = (username) =>
 
 const [versionSignal, setVersionSignal] = createSignal("N/A");
 const versionBroadcastChannel = new BroadcastChannel("version");
+
 versionBroadcastChannel.onmessage = (event) => {
-  setVersionSignal(event.data);
   if (event.data === "version") return;
-  versionBroadcastChannel.close();
+  setVersionSignal(event.data);
 };
 
 export async function getSWVersion() {
