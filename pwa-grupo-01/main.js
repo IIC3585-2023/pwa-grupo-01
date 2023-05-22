@@ -191,6 +191,7 @@ function attachMainNavigation() {
       // No hay que cambiar nada
       contentEl.innerHTML = "";
       pagesWithBtns[oldPageIndex].component(contentEl);
+      createBtn.disabled = !user || newPageIndex !== 0;
       return;
     }
 
