@@ -3,7 +3,7 @@
 import { getMessaging, onBackgroundMessage } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-messaging-sw.js";
 import { app } from "./js/firebase/app.js";
 
-const version = "0.2.1";
+const version = "0.2.2";
 
 const staticFiles = [
   "/pwa-grupo-01/",
