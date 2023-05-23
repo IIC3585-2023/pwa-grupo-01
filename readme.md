@@ -2,6 +2,10 @@
 
 This is a version of 9gag created usuing a vanilla JS PWA
 
+There is available:
+- [PWA](https://iic3585-2023.github.io/pwa-grupo-01/)
+- [Presentation](./slides/PWA.pdf)
+
 We are using:
 - Icons: https://icones.js.org/collection/ic
 - Animations: https://developer.chrome.com/docs/web-platform/view-transitions/
